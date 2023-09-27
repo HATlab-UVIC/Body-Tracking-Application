@@ -103,13 +103,18 @@ public class TCPClient : MonoBehaviour
         try
         {
             // writes the header "v" to stream to specify type of data being passed.
-            // this is used for decoding on the computer side of the process
+            // this is used for decoding on the computer side of the process.
+            // [1] byte -> single char is 1 byte of data
             _dataWriter.WriteString("v");
 
-            // write timestamp and byte length of image to stream
+            // write byte length of image to stream.
+            // [4] bytes -> Int32 is 4 bytes of data
             _dataWriter.WriteInt32(image_data.Length);
 
-            // write image byte data to stream
+            // write image byte data to stream.
+            // [image_data.Length] bytes -> writes the number of bytes as specified
+            //                              by image_data.Length (# of bytes which
+            //                              represent the image)
             _dataWriter.WriteBytes(image_data);
 
             // send image data over TCP

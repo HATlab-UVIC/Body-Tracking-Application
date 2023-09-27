@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\CameraStream\CameraImageFrameStream.cs" />
+    <Compile Include="Assets\Scripts\BodyPositionManagement\BodyPositionManager.cs" />
     <Compile Include="Assets\Scripts\CameraStream\VideoPanelApp.cs" />
     <Compile Include="Assets\Scripts\CameraStream\VideoPanel.cs" />
     <Compile Include="Assets\Scripts\CameraStream\DebugText.cs" />
@@ -64,7 +65,6 @@
     <Compile Include="Assets\Scripts\TCP\TCPClient.cs" />
     <Compile Include="Assets\Scripts\CameraStream\CameraStreamHelper.cs" />
     <Compile Include="Assets\Scripts\CameraStream\LocatableCameraUtils.cs" />
-    <Compile Include="Assets\Scripts\BodyPositionManagement\BodyPositionManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

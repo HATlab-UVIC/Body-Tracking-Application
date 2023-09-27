@@ -5,16 +5,16 @@ m_ProjectFiles:
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
-      ticks: 638303101804451726
-    m_Hash: 1360237233
+      ticks: 638312830755420649
+    m_Hash: 3835412463
   m_LockFileStatus:
     m_FilePath: C:/Users/hatla/Documents/HATlab-BodyTracking/BodyTracking-App-HATlab/BodyTracking-App-Hatlab/Packages/packages-lock.json
     m_PathExists: 1
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
-      ticks: 638303101804751188
-    m_Hash: 3080399000
+      ticks: 638312830755430659
+    m_Hash: 1523758826
 m_EmbeddedPackageManifests:
   m_ManifestsStatus: {}
 m_LocalPackages:
@@ -31,7 +31,7 @@ m_LocalPackages:
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
-      ticks: 638303099861537475
+      ticks: 638312830754568304
     m_Hash: 1317146985
   - m_FilePath: C:\Users\hatla\Documents\HATlab-BodyTracking\BodyTracking-App-HATlab\BodyTracking-App-Hatlab\Packages\MixedReality\com.microsoft.mixedreality.toolkit.foundation-2.8.3.tgz/package.json
     m_PathExists: 0
@@ -45,7 +45,7 @@ m_LocalPackages:
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
-      ticks: 638193066686174504
+      ticks: 638312830755050652
     m_Hash: 4293736214
   - m_FilePath: C:\Users\hatla\Documents\HATlab-BodyTracking\BodyTracking-App-HATlab\BodyTracking-App-Hatlab\Packages\MixedReality\com.microsoft.mixedreality.toolkit.standardassets-2.8.3.tgz/package.json
     m_PathExists: 0
@@ -59,7 +59,7 @@ m_LocalPackages:
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
-      ticks: 638193066675087389
+      ticks: 638312830755410657
     m_Hash: 4011041438
 m_ProjectPath: C:/Users/hatla/Documents/HATlab-BodyTracking/BodyTracking-App-HATlab/BodyTracking-App-Hatlab/Packages
 m_EditorVersion: 2021.3.24f1 (cf10dcf7010d)
@@ -4122,6 +4122,8 @@ m_ResolvedPackages:
     - 5.1.0-pre.8
     - 5.1.0-pre.9
     - 5.1.0-pre.10
+    - 5.1.0
+    - 6.0.0-pre.3
     compatible:
     - 4.2.7
     - 4.2.8
@@ -4146,6 +4148,7 @@ m_ResolvedPackages:
     - 5.1.0-pre.8
     - 5.1.0-pre.9
     - 5.1.0-pre.10
+    - 5.1.0
     verified: 4.2.8
   dependencies:
   - name: com.unity.xr.arsubsystems
