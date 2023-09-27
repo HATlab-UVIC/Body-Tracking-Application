@@ -44,22 +44,21 @@ public class BodyPositionManager // : MonoBehaviour
         
         string[] _coordinateVectors = OP_Body_Coordinates.Split("][");
 
-        string[] _vectorComponents;
 
+        string[] _vectorComponents;
+        float[] xyz_component = new float[3];
         Vector3 _pointVector;
-        for (int i=1; i < _coordinateVectors.Length - 1; i++)
+        for (int i=0; i < _coordinateVectors.Length; i++)
         {
             // split based on any number of whitespaces
             _vectorComponents = Regex.Split(_coordinateVectors[i],@"\s+");
 
+            // store the x, y, z components as float values
+            for (int j = 0; j < 3; j++) xyz_component[j] = float.Parse(_vectorComponents[j]); // / 50; // note: uses 35 in old TCPServer class
 
-            float v0 = float.Parse(_vectorComponents[0]);// / 50;
-            float v1 = float.Parse(_vectorComponents[1]);// / 50;
-            float v2 = float.Parse(_vectorComponents[2]);// / 50; // note: uses 35 in old TCPServer class
-
-            _pointVector = new Vector3(v0, v1, v2);
+            // save components as Vector3 and store to body joint coordinate vectors variable
+            _pointVector = new Vector3(xyz_component[0], xyz_component[1], xyz_component[2]);
             _bodyJointCoordinateVectors[i] = _pointVector;
-
         }
         return true;
     }
