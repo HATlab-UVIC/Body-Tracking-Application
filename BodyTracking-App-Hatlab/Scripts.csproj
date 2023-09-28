@@ -65,6 +65,7 @@
     <Compile Include="Assets\Scripts\TCP\TCPClient.cs" />
     <Compile Include="Assets\Scripts\CameraStream\CameraStreamHelper.cs" />
     <Compile Include="Assets\Scripts\CameraStream\LocatableCameraUtils.cs" />
+    <Compile Include="Assets\Scripts\BodyPositionManagement\BodyJointCoordinates.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Scripts.asmdef" />

@@ -342,6 +342,7 @@
 -r:"C:/Users/hatla/Documents/HATlab-BodyTracking/BodyTracking-App-HATlab/BodyTracking-App-Hatlab/Library/PackageCache/com.unity.visualscripting@1.8.0/Runtime/VisualScripting.Flow/Dependencies/NCalc/Unity.VisualScripting.Antlr3.Runtime.dll"
 -r:"Library/Bee/artifacts/2100b0aE.dag/UnityEditor.UI.ref.dll"
 -r:"Library/Bee/artifacts/2100b0aE.dag/UnityEngine.UI.ref.dll"
+"Assets/Scripts/BodyPositionManagement/BodyJointCoordinates.cs"
 "Assets/Scripts/BodyPositionManagement/BodyPositionManager.cs"
 "Assets/Scripts/CameraStream/CameraImageFrameStream.cs"
 "Assets/Scripts/CameraStream/CameraStreamHelper.cs"
