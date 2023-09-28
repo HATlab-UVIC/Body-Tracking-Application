@@ -12,6 +12,7 @@ using Windows.Networking.Connectivity;
 using Windows.Storage.Streams;
 #endif
 
+public delegate void TCP_Data_Read_EventHandler(string _bodyCoordinatesData);
 
 // Use to receive data from the computer
 public class TCPServer : MonoBehaviour
@@ -21,8 +22,9 @@ public class TCPServer : MonoBehaviour
     byte[] OP_Bytes_Data;
     uint OP_Bytes_Length;
     string _bodyCoordinatesData;
-    BodyPositionManager _bodyPositionManager;
-    public static bool _frameCoordinateDataSet { get; set; } = false;
+    BodyJointCoordinates _bodyJointCoordinates;
+    public event TCP_Data_Read_EventHandler TCP_Data_Read;
+    public static bool _TCP_Connected { get; set; } = false; // TODO: Change set back to private | Changed for testing
 
 
     private static int DATAREADER_TIMOUT = 30000; // 30 seconds
@@ -46,7 +48,9 @@ public class TCPServer : MonoBehaviour
     // the client on the computer
     private void Start()
     {
-        _bodyPositionManager = BodyPositionManager.Instance;
+        _bodyJointCoordinates = BodyJointCoordinates.Instance;
+        TCP_Data_Read += _bodyJointCoordinates.getBodyCoordinatesFromTCPStream;
+
         coordinates_offset = _alignment.position;
 
 #if !UNITY_EDITOR
@@ -87,6 +91,7 @@ public class TCPServer : MonoBehaviour
     {
         try
         {
+            _TCP_Connected = true;
             // create a data reader object to read data from the input stream
             using (var _dataReader = new DataReader(args.Socket.InputStream))
             {
@@ -116,12 +121,13 @@ public class TCPServer : MonoBehaviour
                     _bodyCoordinatesData = Encoding.UTF8.GetString(OP_Bytes_Data);
 
                     // store the joint data to the body position manager
-                    _frameCoordinateDataSet = _bodyPositionManager.getBodyCoordinatesFromTCPStream(_bodyCoordinatesData);
+                    TCP_Data_Read?.Invoke(_bodyCoordinatesData);
                 }
             }
         }
         catch (Exception e) 
         {
+            _TCP_Connected = false;
             Debug.Log("TCP Server socket connection closed.");
             Debug.Log("ERROR: " + e.Message);
         }

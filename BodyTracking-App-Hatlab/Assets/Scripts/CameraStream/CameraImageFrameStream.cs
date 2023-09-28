@@ -60,8 +60,8 @@ public class CameraImageFrameStream : MonoBehaviour
 #endif
 
         // get the TCP functionality from client and server scripts
-        tcp_client = this.gameObject.GetComponent<TCPClient>();
-        tcp_server = this.gameObject.GetComponent<TCPServer>();
+        tcp_client = gameObject.GetComponent<TCPClient>();
+        tcp_server = gameObject.GetComponent<TCPServer>();
 
         // initializing the coordinate system reference
 #if WINDOWS_UWP && XR_PLUGIN_WINDOWSMR
@@ -188,7 +188,6 @@ public class CameraImageFrameStream : MonoBehaviour
         // position correctly in the scene.
         // Note: cameraToWorldMatrix_float is being passed by reference
         if (!sample.TryGetCameraToWorldMatrix(out float[] cameraToWorldMatrix_float)) ; // return
-
         // convert float[] to matrix that can be used by Unity
         Matrix4x4 _cameraToWorldMatrix = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(cameraToWorldMatrix_float);
 
