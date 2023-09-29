@@ -7,10 +7,13 @@ using UnityEngine;
 
 public class BodyPositionManager : MonoBehaviour
 {
+    public static LimbStruct[] _limbs; 
+
     BodyJointCoordinates _bodyJointCoordinates;
     public static float testVar = 0;
     private void Start()
     {
+        init_limbs();
         _bodyJointCoordinates = BodyJointCoordinates.Instance;
     }
 
@@ -25,9 +28,22 @@ public class BodyPositionManager : MonoBehaviour
 
     private void UpdateBodyComponents(Vector3[] jointCoordinateVectors)
     {
-        testVar = jointCoordinateVectors[0].x;
+        for (int i = 0; i < _limbs.Length; i++) 
+        {
+            _limbs[i].limbOrigin = jointCoordinateVectors[_limbs[i].jointKey[0]];
+            _limbs[i].limbVector = jointCoordinateVectors[_limbs[i].jointKey[1]] - jointCoordinateVectors[_limbs[i].jointKey[0]];
+        }
     }
 
 
-    
+    private void init_limbs()
+    {
+        int i = 0;
+        _limbs = new LimbStruct[16];
+        foreach (var key in LimbAssignmentKey._limbKeys) 
+        { 
+            _limbs[i].name = key.name;
+            _limbs[i++].jointKey = key.i;
+        }
+    }
 }

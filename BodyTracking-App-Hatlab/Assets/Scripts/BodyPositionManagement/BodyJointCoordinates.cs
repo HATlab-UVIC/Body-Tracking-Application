@@ -4,7 +4,7 @@ using UnityEngine;
 
 // BodyJointCoordinates class is used as an intermediary point for TCP to store the joint coordinates
 // read from TCP, and, for the BodyPositionManager to access and assign the joint data to the appropriate
-// joint and limb objects
+// limb objects
 public class BodyJointCoordinates
 {
     private static BodyJointCoordinates _instance;

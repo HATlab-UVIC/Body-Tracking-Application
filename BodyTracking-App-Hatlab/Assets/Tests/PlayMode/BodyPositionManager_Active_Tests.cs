@@ -9,21 +9,35 @@ using System.Threading.Tasks;
 public class BodyPositionManager_Active_Tests
 {
     string OP_Body_Coordinates_input = "[[[251.86478     77.78895      0.7667822 ]\n  [252.51468     95.317856     0.876728  ]\n  [240.80292     95.322365     0.8040645 ]\n  [232.37624    116.77977      0.8273126 ]\n  [236.22884    107.00365      0.5796813 ]\n  [266.7548      95.29869      0.786159  ]\n  [273.3028     115.452614     0.800534  ]\n  [268.09955    106.35879      0.7154094 ]\n  [251.82945    134.94682      0.7444093 ]\n  [242.13077    134.29881      0.7457033 ]\n  [236.90192    163.49742      0.8655727 ]\n  [241.44772    190.79929      0.83191615]\n  [259.63016    136.23273      0.69610536]\n  [252.50996    164.16794      0.8566567 ]\n  [258.32214    190.13763      0.8514975 ]\n  [249.88536     75.206375     0.7748856 ]\n  [254.43979     75.18927      0.7664361 ]\n  [246.62242     75.84186      0.54281354]\n  [258.3567      75.21359      0.73365533]\n  [257.71597    195.97488      0.77183896]\n  [262.24216    195.31381      0.8010959 ]\n  [257.69754    192.08958      0.6295021 ]\n  [238.8438     196.64983      0.71956825]\n  [236.24486    195.36232      0.81978583]\n  [243.402      194.03827      0.6732243 ]]]";
+    string[] _limbs_strings = {"neck","leftShoulder","upperLeftArm","lowerLeftArm","rightShoulder",
+                        "upperRightArm","lowerRightArm","chest","LeftHip","leftThigh","leftCalf",
+                        "rightHip","rightThigh","rightCalf","leftFoot","rightFoot"};
+    
+    private BodyJointCoordinates _BJC;
+    GameObject BodyPositionManager_Object;
+
+
+    [SetUp]
+    public void Init_BodyPositionManager()
+    {
+        // initialize body joint coordinates instance
+        _BJC = BodyJointCoordinates.Instance;
+
+        // initialize body position manager game object
+        BodyPositionManager_Object = new GameObject();
+        BodyPositionManager_Object.AddComponent<BodyPositionManager>();
+    }
 
 
     // Purpose: Verify that when the string of data from the TCPServer is passed to BodyJointCoordinates,
-    // BodyPositionManager is able to access the Vector3[] and use the joint coordinates to update other
-    // classes via its Unity Update() method
+    // BodyPositionManager is able to access the Vector3[] and use the joint coordinates to update the
+    // appropriate LimbStruct element with the associated joint coordinates via the Unity Update() method
     [Test]
-    public async void test_BodyPositionManager_Update()
+    public async void test_BodyPositionManager_Update_ValidateVectors()
     {
         Vector3[] actualCoordinateVectors = helper_OP_vectors();
 
-        BodyJointCoordinates _BJC = BodyJointCoordinates.Instance;
         _BJC.getBodyCoordinatesFromTCPStream(OP_Body_Coordinates_input);
-
-        GameObject BodyPositionManager_Object = new GameObject();
-        BodyPositionManager_Object.AddComponent<BodyPositionManager>();
 
         // Note: in TCPServer class, change _TCP_Connected to "set", for testing purposes
         // this allows us to emulate an established connection to the client
@@ -31,9 +45,39 @@ public class BodyPositionManager_Active_Tests
 
         await Task.Delay(TimeSpan.FromSeconds(5));
 
-        Assert.Equals(actualCoordinateVectors[0].x, BodyPositionManager.testVar);
+        int i = 0;
+        Vector3 actualVector;
+        foreach (var limb in BodyPositionManager._limbs)
+        {
+            actualVector = actualCoordinateVectors[LimbAssignmentKey._limbKeys[i++].i[0]];
+            Assert.Equals(actualVector, limb.limbOrigin);
+        }
+
         Assert.IsFalse(_BJC._coordinateDataSet);
     }
+
+
+    [Test]
+    public async void test_BodyPositionManager_Update_ValidateNames()
+    {
+        _BJC.getBodyCoordinatesFromTCPStream(OP_Body_Coordinates_input);
+
+        // Note: in TCPServer class, change _TCP_Connected to "set", for testing purposes
+        // this allows us to emulate an established connection to the client
+        TCPServer._TCP_Connected = true;
+
+        await Task.Delay(TimeSpan.FromSeconds(5));
+
+        int i = 0;
+        foreach (var limb in BodyPositionManager._limbs) { Assert.Equals(_limbs_strings[i++], limb.name); }
+    }
+
+
+
+
+
+
+
 
     // Sample Vector3[] that should be produced from function under test
     private Vector3[] helper_OP_vectors()
