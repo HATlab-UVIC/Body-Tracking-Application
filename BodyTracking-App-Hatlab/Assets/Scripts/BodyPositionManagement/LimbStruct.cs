@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
+// used as a container for storing data associated to a limb element
 public struct LimbStruct 
 {
     public string name;

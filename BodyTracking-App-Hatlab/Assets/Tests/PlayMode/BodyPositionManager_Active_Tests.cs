@@ -57,6 +57,7 @@ public class BodyPositionManager_Active_Tests
     }
 
 
+    // Purpose: Verify that when the BodyPositionManager starts, it initializes the LimbStruct[] array properly
     [Test]
     public async void test_BodyPositionManager_Update_ValidateNames()
     {

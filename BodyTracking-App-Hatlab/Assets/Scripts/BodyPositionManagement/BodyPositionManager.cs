@@ -26,6 +26,9 @@ public class BodyPositionManager : MonoBehaviour
         }
     }
 
+
+    // Takes in the joint vectors from BodyJointCoordinates and assigns/calculates their
+    // associated limb positions and vectors
     private void UpdateBodyComponents(Vector3[] jointCoordinateVectors)
     {
         for (int i = 0; i < _limbs.Length; i++) 
@@ -36,6 +39,9 @@ public class BodyPositionManager : MonoBehaviour
     }
 
 
+    // initializes the LimbStruct[] array, assigning each limb a name
+    // and an int[] jointKey that identifies the two limb endpoint indices
+    // for accessing the associated jointCoordinateVectors data array index
     private void init_limbs()
     {
         int i = 0;
