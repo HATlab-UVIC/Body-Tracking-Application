@@ -44,7 +44,7 @@ public class CameraImageFrameStream : MonoBehaviour
     // --------------------------------------
     void Start()
     {
-        Console.WriteLine("Starting Program...");
+        Debug.Log("Starting Program...");
 
         // initializing the 3D depth sensor
 #if ENABLE_WINMD_SUPPORT
@@ -62,6 +62,11 @@ public class CameraImageFrameStream : MonoBehaviour
         // get the TCP functionality from client and server scripts
         tcp_client = gameObject.GetComponent<TCPClient>();
         tcp_server = gameObject.GetComponent<TCPServer>();
+
+        // TODO: may move this to a voice command later
+#if WINDOWS_UWP
+        tcp_client.start_tcp_client_connection();
+#endif
 
         // initializing the coordinate system reference
 #if WINDOWS_UWP && XR_PLUGIN_WINDOWSMR
@@ -86,10 +91,10 @@ public class CameraImageFrameStream : MonoBehaviour
 
     private void Update()
     {
-        if (!TCPClient.tcp_connected) return;
+        if (!TCPClient.tcp_client_connected) return;
 
         // send image frame over TCP to computer.
-        // do this every frame if TCP i connected //Note: may move this to FrameSampleAcquired handler
+        // do this every frame if TCP is connected //Note: may move this to FrameSampleAcquired handler
         SendSingleFrameAsync();
     }
 

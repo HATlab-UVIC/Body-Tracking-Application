@@ -11,6 +11,7 @@ public class BodyJointCoordinates
     public Vector3[] _bodyJointCoordinateVectors;
     public bool _coordinateDataSet { get; set; } = false;
 
+
     // private constructor method
     private BodyJointCoordinates() { _bodyJointCoordinateVectors = new Vector3[25]; }
 

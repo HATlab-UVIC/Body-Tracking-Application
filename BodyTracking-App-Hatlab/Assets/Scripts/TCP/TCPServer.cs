@@ -24,7 +24,7 @@ public class TCPServer : MonoBehaviour
     string _bodyCoordinatesData;
     BodyJointCoordinates _bodyJointCoordinates;
     public event TCP_Data_Read_EventHandler TCP_Data_Read;
-    public static bool _TCP_Connected { get; set; } = false; // TODO: Change set back to private | Changed for testing
+    public static bool tcp_server_connected { get; set; } = false; // TODO: Change set back to private | Changed for testing
 
 
     private static int DATAREADER_TIMOUT = 30000; // 30 seconds
@@ -91,7 +91,7 @@ public class TCPServer : MonoBehaviour
     {
         try
         {
-            _TCP_Connected = true;
+            tcp_server_connected = true;
             // create a data reader object to read data from the input stream
             using (var _dataReader = new DataReader(args.Socket.InputStream))
             {
@@ -127,7 +127,7 @@ public class TCPServer : MonoBehaviour
         }
         catch (Exception e) 
         {
-            _TCP_Connected = false;
+            tcp_server_connected = false;
             Debug.Log("TCP Server socket connection closed.");
             Debug.Log("ERROR: " + e.Message);
         }

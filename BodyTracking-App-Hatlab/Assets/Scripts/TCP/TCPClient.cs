@@ -12,15 +12,15 @@ public class TCPClient : MonoBehaviour
 {
     // data fields in Unity editor
     [SerializeField]
-    string HL_host_IP_address, connection_port;
+    string remoteHost_IP_address, remote_connection_port;
 
     // TCP connection status variable
-    public static bool tcp_connected { get; private set; } = false;
+    public static bool tcp_client_connected { get; private set; } = false;
 
 
     // when the application goes into the background (not being used)
     // stop the TCP client connection
-    private bool startup_check = true;
+    private static bool startup_check = true;
     private void OnApplicationFocus(bool appInUse)
     {
         // wait for user to say "connect" to start TCP
@@ -33,7 +33,7 @@ public class TCPClient : MonoBehaviour
         // auto connect/disconnect to TCP on app focus
 #if WINDOWS_UWP
         if (!appInUse) stop_tcp_client_connection();
-        else if (appInUse && !tcp_connected) start_tcp_client_connection();
+        else if (appInUse && !tcp_client_connected) start_tcp_client_connection();
 #endif
     }
 
@@ -54,17 +54,17 @@ public class TCPClient : MonoBehaviour
         try
         {
             _dataStreamSocket = new StreamSocket();
-            var _hostName = new Windows.Networking.HostName(HL_host_IP_address);
+            var _hostName = new Windows.Networking.HostName(remoteHost_IP_address);
 
             // establish an asynchronous connection with a remote server
-            await _dataStreamSocket.ConnectAsync(_hostName, connection_port);
+            await _dataStreamSocket.ConnectAsync(_hostName, remote_connection_port);
             
             // initializing the read and write objects for TCP
             _dataWriter = new DataWriter(_dataStreamSocket.OutputStream);
             _dataReader = new DataReader(_dataStreamSocket.InputStream);
 
             _dataReader.InputStreamOptions = InputStreamOptions.Partial;
-            tcp_connected = true;
+            tcp_client_connected = true;
             Debug.Log("Connected to TCP Server.");
         } 
         catch (Exception e)
@@ -87,7 +87,7 @@ public class TCPClient : MonoBehaviour
         _dataReader = null;
 
         _dataStreamSocket?.Dispose();
-        tcp_connected = false;
+        tcp_client_connected = false;
         Debug.Log("Disconnected from TCP Server.");
     }
 

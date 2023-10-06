@@ -14,6 +14,7 @@ public class BodyPositionManager_Active_Tests
                         "rightHip","rightThigh","rightCalf","leftFoot","rightFoot"};
     
     private BodyJointCoordinates _BJC;
+    private LimbComponents _LC;
     GameObject BodyPositionManager_Object;
 
 
@@ -22,6 +23,7 @@ public class BodyPositionManager_Active_Tests
     {
         // initialize body joint coordinates instance
         _BJC = BodyJointCoordinates.Instance;
+        _LC = LimbComponents.Instance;
 
         // initialize body position manager game object
         BodyPositionManager_Object = new GameObject();
@@ -39,15 +41,15 @@ public class BodyPositionManager_Active_Tests
 
         _BJC.getBodyCoordinatesFromTCPStream(OP_Body_Coordinates_input);
 
-        // Note: in TCPServer class, change _TCP_Connected to "set", for testing purposes
+        // Note: in TCPServer class, change tcp_server_connected to "set", for testing purposes
         // this allows us to emulate an established connection to the client
-        TCPServer._TCP_Connected = true;
+        TCPServer.tcp_server_connected = true;
 
         await Task.Delay(TimeSpan.FromSeconds(5));
 
         int i = 0;
         Vector3 actualVector;
-        foreach (var limb in BodyPositionManager._limbs)
+        foreach (var limb in _LC._limbs)
         {
             actualVector = actualCoordinateVectors[LimbAssignmentKey._limbKeys[i++].i[0]];
             Assert.Equals(actualVector, limb.limbOrigin);
@@ -63,14 +65,14 @@ public class BodyPositionManager_Active_Tests
     {
         _BJC.getBodyCoordinatesFromTCPStream(OP_Body_Coordinates_input);
 
-        // Note: in TCPServer class, change _TCP_Connected to "set", for testing purposes
+        // Note: in TCPServer class, change tcp_server_connected to "set", for testing purposes
         // this allows us to emulate an established connection to the client
-        TCPServer._TCP_Connected = true;
+        TCPServer.tcp_server_connected = true;
 
         await Task.Delay(TimeSpan.FromSeconds(5));
 
         int i = 0;
-        foreach (var limb in BodyPositionManager._limbs) { Assert.Equals(_limbs_strings[i++], limb.name); }
+        foreach (var limb in _LC._limbs) { Assert.Equals(_limbs_strings[i++], limb.name); }
     }
 
 
