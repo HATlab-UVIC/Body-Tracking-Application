@@ -82,7 +82,7 @@ public struct LimbStruct
 // as well as holding the array index keys that relate the joint
 // coordinates to the limb.
 //
-// ie. _bodyJointCoordinateVectors[1] and _bodyJointCoordinateVectors[2]
+// ie. _jointCoordinateVectors[1] and _jointCoordinateVectors[2]
 // make up the start and end coordinates of the left shoulder.
 //
 // Use these to update the body component values

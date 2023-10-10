@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\BodyPositionManagement\BodyPositionCalculator.cs" />
+    <Compile Include="Assets\Scripts\BodyPositionManagement\LimbComponents.cs" />
     <Compile Include="Assets\Scripts\CameraStream\CameraImageFrameStream.cs" />
     <Compile Include="Assets\Scripts\BodyPositionManagement\BodyPositionManager.cs" />
     <Compile Include="Assets\Scripts\TCP\TCPServer.cs" />
@@ -64,7 +65,6 @@
     <Compile Include="Assets\Scripts\CameraStream\CameraStreamHelper.cs" />
     <Compile Include="Assets\Scripts\CameraStream\LocatableCameraUtils.cs" />
     <Compile Include="Assets\Scripts\BodyPositionManagement\BodyJointCoordinates.cs" />
-    <Compile Include="Assets\Scripts\BodyPositionManagement\LimbComponents.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Scripts.asmdef" />

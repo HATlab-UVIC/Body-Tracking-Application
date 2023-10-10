@@ -20,7 +20,7 @@ public class TCP_Communication_Tests
         BodyJointCoordinates _BJC = BodyJointCoordinates.Instance;
         _BJC.getBodyCoordinatesFromTCPStream(OP_Body_Coordinates_input);
 
-        Assert.AreEqual(helper_OP_vectors(), _BJC._bodyJointCoordinateVectors);
+        Assert.AreEqual(helper_OP_vectors(), _BJC._jointCoordinateVectors);
         Assert.IsTrue(_BJC._coordinateDataSet);
     }
 

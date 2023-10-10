@@ -8,12 +8,12 @@ using UnityEngine;
 public class BodyJointCoordinates
 {
     private static BodyJointCoordinates _instance;
-    public Vector3[] _bodyJointCoordinateVectors;
+    public Vector3[] _jointCoordinateVectors;
     public bool _coordinateDataSet { get; set; } = false;
 
 
     // private constructor method
-    private BodyJointCoordinates() { _bodyJointCoordinateVectors = new Vector3[25]; }
+    private BodyJointCoordinates() { _jointCoordinateVectors = new Vector3[25]; }
 
     // singleton constructor. Used for defining only a single instance that can be referenced
     // from different classes
@@ -57,7 +57,7 @@ public class BodyJointCoordinates
 
             // save components as Vector3 and store to body joint coordinate vectors variable
             _pointVector = new Vector3(xyz_component[0], xyz_component[1], xyz_component[2]);
-            _bodyJointCoordinateVectors[i] = _pointVector;
+            _jointCoordinateVectors[i] = _pointVector;
         }
         _coordinateDataSet = true;
     }

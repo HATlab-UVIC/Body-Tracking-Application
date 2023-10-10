@@ -15,6 +15,13 @@ using HL2UnityPlugin;
 using UnityEngine.Windows;
 #endif
 
+/// </summary>
+/// **Add Define Symbols:**
+/// Open **File > Build Settings > Player Settings > Other Settings** and add the following to `Scripting Define Symbols` depending on the XR system used in your project;
+/// - Legacy built-in XR: `BUILTIN_XR`';
+/// - XR Plugin Management (Windows Mixed Reality): `XR_PLUGIN_WINDOWSMR`;
+/// - XR Plugin Management (OpenXR):`XR_PLUGIN_OPENXR`.
+/// </summary>
 public class CameraImageFrameStream : MonoBehaviour
 {
     // Image variable definitions
@@ -42,6 +49,7 @@ public class CameraImageFrameStream : MonoBehaviour
     // --------------------------------------
     // Initialize components on program start
     // --------------------------------------
+    Queue<Action> _mainThreadActions;
     void Start()
     {
         Debug.Log("Starting Program...");
@@ -62,6 +70,8 @@ public class CameraImageFrameStream : MonoBehaviour
         // get the TCP functionality from client and server scripts
         tcp_client = gameObject.GetComponent<TCPClient>();
         tcp_server = gameObject.GetComponent<TCPServer>();
+
+        _mainThreadActions = new Queue<Action>();
 
         // TODO: may move this to a voice command later
 #if WINDOWS_UWP
@@ -91,6 +101,15 @@ public class CameraImageFrameStream : MonoBehaviour
 
     private void Update()
     {
+        // Handle the camera transform action updates stored in the queue
+        lock (_mainThreadActions)
+        {
+            while (_mainThreadActions.Count > 0)
+            {
+                _mainThreadActions.Dequeue().Invoke();
+            }
+        }
+
         if (!TCPClient.tcp_client_connected) return;
 
         // send image frame over TCP to computer.
@@ -99,6 +118,18 @@ public class CameraImageFrameStream : MonoBehaviour
     }
 
 
+    // used as a local helper method the add an action to our main thread queue
+    private void Enqueue(Action action)
+    {
+        lock(_mainThreadActions)
+        {
+            _mainThreadActions.Enqueue(action);
+        }
+    }
+
+
+    // on shutdown of the application, perform teardown of attached subscriber method and
+    // dispose of the video capture object
     private void OnDestroy()
     {
         if (_videoCapture != null)
@@ -108,7 +139,29 @@ public class CameraImageFrameStream : MonoBehaviour
         }
     }
 
+    // TODO: looks like fixedupdate and savepointcloud are only being used in a debug context
+    public int counter = 0;
+    private void FixedUpdate()
+    {
+        if (counter % 40 == 0)
+        {
+            SavePointCloudPLY();
+        }
+        counter++;
+    }
 
+
+    public void SavePointCloudPLY()
+    {
+#if ENABLE_WINMD_SUPPORT
+        var longpointCloud = researchMode.GetLongThrowPointCloudBuffer();
+        var longpointMap = researchMode.GetLongDepthMapTextureBuffer();
+        DebugText.LOG(longpointMap[5040].ToString() + ", " + longpointMap[4440].ToString()+ ", " + longpointMap[4740].ToString());
+#endif
+    }
+
+
+    // a local method reference for sending the image byte data over TCP
     public void SendSingleFrameAsync()
     {
 #if ENABLE_WINMD__SUPPORT && WINDOWS_UWP
@@ -178,6 +231,17 @@ public class CameraImageFrameStream : MonoBehaviour
     // - Event handler method -
     void OnFrameSampleAcquired(VideoCaptureSample sample)
     {
+        // Limits the number of actions that can be added to the queue.
+        // TODO: not sure if this is necessary to be done in a queue
+        lock (_mainThreadActions)
+        {
+            if (_mainThreadActions.Count > 2)
+            {
+                sample.Dispose();
+                return;
+            }
+        }
+
         // if byte array is null or not big enough to hold all the image bytes then
         // define a new array that is large enough, otherwise, use the existing array
         if (_latestImageBytes == null || _latestImageBytes.Length < sample.dataLength)
@@ -202,6 +266,25 @@ public class CameraImageFrameStream : MonoBehaviour
         // Note: projectionMatrix_float is being passed by referene
         if (!sample.TryGetProjectionMatrix(out float[] projectionMatrix_float)) ; // return
         Matrix4x4 _projectionMatrix = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(projectionMatrix_float);
+
+        Enqueue(() =>
+        {
+#if XR_PLUGIN_WINDOWSMR || XR_PLUGIN_OPENXR
+            // Note: This is from the VideoPanelApp file. Not sure the end significance of this yet whether it is needed or not.
+            // This is the only use for the Queue as all other functionality in the VideoPanelApp is for updating debug text data.
+            //
+            // It appears that the Legacy built-in XR environment automatically applies the Holelens Head Pose to Unity camera transforms,
+            // but not to the new XR system (XR plugin management) environment.
+            // Here the cameraToWorldMatrix is applied to the camera transform as an alternative to Head Pose,
+            // so the position of the displayed video panel is significantly misaligned. If you want to apply a more accurate Head Pose, use MRTK.
+
+            Camera unityCamera = Camera.main;
+            Matrix4x4 invertZScaleMatrix = Matrix4x4.Scale(new Vector3(1, 1, -1));
+            Matrix4x4 localToWorldMatrix = _cameraToWorldMatrix * invertZScaleMatrix;
+            unityCamera.transform.localPosition = localToWorldMatrix.GetColumn(3);
+            unityCamera.transform.localRotation = Quaternion.LookRotation(localToWorldMatrix.GetColumn(2), localToWorldMatrix.GetColumn(1));
+#endif
+        });
 
         // memory management
         sample.Dispose();
