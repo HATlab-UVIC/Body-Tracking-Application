@@ -6,6 +6,7 @@ public class LimbComponents
 {
     private static LimbComponents _instance;
     public LimbStruct[] _limbs;
+    public static readonly float DEFAULT_LIMB_SIZE = 0.1f;
 
 
     // private constructor method
