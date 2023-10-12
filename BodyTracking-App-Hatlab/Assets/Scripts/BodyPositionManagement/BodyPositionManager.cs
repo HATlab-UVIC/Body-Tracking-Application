@@ -9,14 +9,17 @@ public class BodyPositionManager : MonoBehaviour
 { 
     LimbComponents _limbComponents;
     BodyJointCoordinates _bodyJointCoordinates;
-    
+    public static Transform BodyAlignmentPosition; // transform properties of BodyAlignmentPosition gameObject
+
     
     // initialize classes upon startup of the application
     private void Start()
     {
+        
+        _bodyJointCoordinates = BodyJointCoordinates.Instance;
+        _bodyJointCoordinates.InitJointCoordinates(BodyAlignmentPosition);
         _limbComponents = LimbComponents.Instance;
         _limbComponents.InitLimbs(gameObject);
-        _bodyJointCoordinates = BodyJointCoordinates.Instance;
     }
 
 
@@ -27,19 +30,24 @@ public class BodyPositionManager : MonoBehaviour
         {
             _limbComponents.UpdateBodyComponents(_bodyJointCoordinates._jointCoordinateVectors);
             _bodyJointCoordinates._coordinateDataSet = false;
+
+            AlignLimbObjects(_limbComponents._limbs);
+
         }
     }
 
 
-    public void AlignObjectToLimb(Vector3 origin_coord, Vector3 end_coord, LimbStruct limb)
+    public void AlignLimbObjects(LimbStruct[] limbs)
     {
-        // calculate the position and rotation of the limb object
-        limb.obj.transform.position = Vector3.Lerp(origin_coord, end_coord, 0.5f);
-        limb.obj.transform.rotation = Quaternion.LookRotation(end_coord - origin_coord);
+        foreach (var limb in limbs)
+        {
+            // calculate the position and rotation of the limb object
+            limb.obj.transform.SetPositionAndRotation(Vector3.Lerp(limb.limbOrigin, limb.limbEnd, 0.5f),
+                                                      Quaternion.LookRotation(limb.limbEnd - limb.limbOrigin));
 
-        float distance = Vector3.Distance(origin_coord, end_coord);
-        limb.obj.transform.localScale = new Vector3(limb.obj.transform.localScale.x, limb.obj.transform.localScale.y, distance);
-
+            float zScale = Vector3.Distance(limb.limbOrigin, limb.limbEnd);
+            limb.obj.transform.localScale = new Vector3(LimbComponents.DEFAULT_LIMB_SIZE, LimbComponents.DEFAULT_LIMB_SIZE, zScale);
+        }
 
     }
 }
