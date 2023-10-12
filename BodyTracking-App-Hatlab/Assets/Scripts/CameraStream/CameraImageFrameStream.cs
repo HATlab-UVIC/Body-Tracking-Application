@@ -26,7 +26,7 @@ public class CameraImageFrameStream : MonoBehaviour
 {
     // Image variable definitions
     byte[] _latestImageBytes;
-    public RawImage _depthImageDisplayed;
+    public RawImage _depthImageRaw;
     public Image _depthImageTexture;
     HoloLensCameraStream.Resolution _resolution;
 
@@ -42,7 +42,7 @@ public class CameraImageFrameStream : MonoBehaviour
 #endif
 
 #if ENABLE_WINMD_SUPPORT
-    HL2ResearchMode _HL2ResearchMode;
+    HL2ResearchMode researchMode;
 #endif
 
 
@@ -56,14 +56,14 @@ public class CameraImageFrameStream : MonoBehaviour
 
         // initializing the 3D depth sensor
 #if ENABLE_WINMD_SUPPORT
-        _HL2ResearchMode = new HL2ResearchMode();
-        _HL2ResearchMode.InitializeLongDepthSensor();
+        researchMode = new HL2ResearchMode();
+        researchMode.InitializeLongDepthSensor();
 
-        _HL2ResearchMode.SetPointCloudDepthOffset(0);
-        _HL2ResearchMode.StartLongDepthSensorLoop(true);
+        researchMode.SetPointCloudDepthOffset(0);
+        researchMode.StartLongDepthSensorLoop(true);
 
 #if WINDOWS_UWP && XR_PLUGIN_OPENXR
-        _HL2ResearchMode.SetReferenceCoordinateSystem(_spatialCoordinateSystem);
+        researchMode.SetReferenceCoordinateSystem(_spatialCoordinateSystem);
 #endif
 #endif
 
@@ -158,6 +158,52 @@ public class CameraImageFrameStream : MonoBehaviour
         var longpointMap = researchMode.GetLongDepthMapTextureBuffer();
         DebugText.LOG(longpointMap[5040].ToString() + ", " + longpointMap[4440].ToString()+ ", " + longpointMap[4740].ToString());
 #endif
+    }
+
+    private static float[] jointDepth_z = new float[25];
+    private static readonly int[] placement_offsets = {0,1,-1,320,-320};
+    public static float[] Apply_DepthPositionFromSensor(Vector3[] jointCoordinateVectors)
+    {
+#if ENABLE_WINMD_SUPPORT
+        Byte[] depthMapTextureBuffer = researchMode.GetLongDepthMapTextureBuffer();
+        Texture2D depthMapImageTexture = new Texture(256, 256);
+
+        ImageConversion.LoadImage(depthMapImageTexture, depthMapTextureBuffer);
+
+        Vector2 pivot = new Vector2(0.5f, 0.5f);
+        Rect spriteRect = new Rect(0, 0, depthMapImageTexture.width, depthMapImageTexture.height);
+        _depthImageTexture.overrideSprite = Sprite.Create(depthMapImageTexture, spriteRect, pivot);
+
+        _depthImageRaw.texture = depthMapImageTexture;
+
+        // TODO: code above may be unnecessary (except for depthMapTextureBuffer)
+        // appears to only be used for displaying depth map, not needed for other purposes.
+
+
+        float x, y;
+        float depthValue;
+        int placement;
+        for (int i=0; i<jointCoordinateVectors.Length; i++)
+        {
+            x = jointCoordinateVectors[i].x + 30.0f;
+            y = jointCoordinateVectors[i].y + 10.0f;
+
+            // possibly calculating the index offset which correlates 2D image pixel data to depth buffer
+            placement = (int)(y * 320 + x);
+            depthValue = 0.0f;
+
+            // calculate the depth value
+            foreach (int offset in placement_offsets)
+            {
+                depthValue += -float.Parse(depthMapTextureBuffer[placement + offset].ToString()) / 80;
+            }
+
+            depthValue /= placement_offsets.Length;
+            jointDepth_z[i] = depthValue + 9.0f;
+        }
+#endif
+
+        return jointDepth_z;
     }
 
 
