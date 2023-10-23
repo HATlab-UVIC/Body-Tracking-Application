@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using bug = System.Diagnostics.Debug;
+
 
 public class LimbComponents
 {
@@ -34,7 +36,7 @@ public class LimbComponents
         for (int i = 0; i < _limbs.Length; i++)
         {
             _limbs[i].limbOrigin = jointCoordinateVectors[_limbs[i].jointKey[0]];
-            _limbs[i].limbOrigin = jointCoordinateVectors[_limbs[i].jointKey[1]];
+            _limbs[i].limbEnd = jointCoordinateVectors[_limbs[i].jointKey[1]];
             _limbs[i].limbVector = jointCoordinateVectors[_limbs[i].jointKey[1]] - jointCoordinateVectors[_limbs[i].jointKey[0]];
         }
     }
@@ -42,20 +44,24 @@ public class LimbComponents
 
     // initializes the LimbStruct[] array, assigning each limb a name
     // and an int[] jointKey that identifies the two limb endpoint indices
-    // for accessing the associated jointCoordinateVectors data array index
-    public void InitLimbs(GameObject parentObj)
+    // for accessing the associated jointCoordinateVectors data array index.
+    // Also initialize the limb game objects to the starting position using
+    // the joint coordinates
+    public void InitLimbs(GameObject parentObj, Vector3[] jointCoodinates)
     {
+        bug.WriteLine("    initializing limb components...");
+
         int i = 0;
         _limbs = new LimbStruct[16];
         foreach (var key in LimbAssignmentKey._limbKeys)
         {
             _limbs[i].name = key.name;
             _limbs[i].jointKey = key.i;
-
-            GameObject obj = parentObj.transform.Find(key.name).gameObject;
-            if (obj) _limbs[i].obj = obj;
-
+            _limbs[i++].obj = parentObj.transform.Find(key.name).gameObject;
         }
+
+        UpdateBodyComponents(jointCoodinates);
+        bug.WriteLine("    end of initializing limb components.");
     }
 
 
