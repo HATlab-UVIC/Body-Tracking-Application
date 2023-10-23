@@ -5,6 +5,9 @@ using HoloLensCameraStream;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
+using bug = System.Diagnostics.Debug;
+using UnityDebug = UnityEngine.Debug;
+
 
 #if WINDOWS_UWP && XR_PLUGIN_OPENXR
 using Windows.Perception.Spatial;
@@ -34,8 +37,10 @@ public class CameraImageFrameStream : MonoBehaviour
     VideoCapture _videoCapture;
     TCPClient tcp_client;
     TCPServer tcp_server;
+    bool tcp_client_init = false;
+    private bool _videoModeStarted = false;
 
-    IntPtr _spatialCoordiateSystem_Ptr;
+    IntPtr _spatialCoordinateSystem_Ptr;
 
 #if WINDOWS_UWP && XR_PLUGIN_OPENXR
     SpatialCoordinateSystem _spatialCoordinateSystem;
@@ -50,9 +55,9 @@ public class CameraImageFrameStream : MonoBehaviour
     // Initialize components on program start
     // --------------------------------------
     Queue<Action> _mainThreadActions;
-    void Start()
+    public void Start()
     {
-        Debug.Log("Starting Program...");
+        UnityDebug.Log("Starting CameraStream:");
 
         // initializing the 3D depth sensor
 #if ENABLE_WINMD_SUPPORT
@@ -73,16 +78,12 @@ public class CameraImageFrameStream : MonoBehaviour
 
         _mainThreadActions = new Queue<Action>();
 
-        // TODO: may move this to a voice command later
-#if WINDOWS_UWP
-        tcp_client.start_tcp_client_connection();
-#endif
-
         // initializing the coordinate system reference
-#if WINDOWS_UWP && XR_PLUGIN_WINDOWSMR
-        _spatialCoordinateSystem_Ptr = UnityEngine.XR.WindowsMR.WindowsMREnvironment.OriginSpatialCoordinateSystem;
+        //#if WINDOWS_UWP && XR_PLUGIN_WINDOWSMR
+        // not upported in newer version of unity
+        // _spatialCoordinateSystem_Ptr = UnityEngine.XR.WindowsMR.WindowsMREnvironment.OriginSpatialCoordinateSystem;
 
-#elif WINDOWS_UWP && XR_PLUGIN_OPENXR
+#if WINDOWS_UWP && XR_PLUGIN_OPENXR
         _spatialCoordinateSystem = Microsoft.MixedReality.OpenXR.PerceptionInterop.GetSceneCoordinateSystem(UnityEngine.Pose.identity) as SpatialCoordinateSystem;
 
 #elif WINDOWS_UWP && BUILTIN_XR
@@ -99,8 +100,21 @@ public class CameraImageFrameStream : MonoBehaviour
     }
 
 
-    private void Update()
+    public void Update()
     {
+        // TODO: may move this to a voice command later
+        if (!tcp_client_init)
+        {
+#if WINDOWS_UWP
+            tcp_client.start_tcp_client_connection();
+            UnityDebug.Log("Starting TCP Client Connection:");
+
+            tcp_client_init = true;
+#endif
+        }
+
+
+        //bug.WriteLine("CameraImageFrameStream Update...");
         // Handle the camera transform action updates stored in the queue
         lock (_mainThreadActions)
         {
@@ -110,10 +124,12 @@ public class CameraImageFrameStream : MonoBehaviour
             }
         }
 
-        if (!TCPClient.tcp_client_connected) return;
+        UnityDebug.Log("Local TCP Client Connection Status: " + TCPClient.tcp_client_connected.ToString());
+        if (!TCPClient.tcp_client_connected && _videoModeStarted) return;
 
         // send image frame over TCP to computer.
         // do this every frame if TCP is connected //Note: may move this to FrameSampleAcquired handler
+        UnityDebug.Log("Sending Image Frame...");
         SendSingleFrameAsync();
     }
 
@@ -130,7 +146,7 @@ public class CameraImageFrameStream : MonoBehaviour
 
     // on shutdown of the application, perform teardown of attached subscriber method and
     // dispose of the video capture object
-    private void OnDestroy()
+    public void OnDestroy()
     {
         if (_videoCapture != null)
         {
@@ -140,33 +156,34 @@ public class CameraImageFrameStream : MonoBehaviour
     }
 
     // TODO: looks like fixedupdate and savepointcloud are only being used in a debug context
-    public int counter = 0;
-    private void FixedUpdate()
+    /*private int counter = 0;
+    public void FixedUpdate()
     {
         if (counter % 40 == 0)
         {
             SavePointCloudPLY();
         }
         counter++;
-    }
+    }*/
 
 
-    public void SavePointCloudPLY()
+    /*public void SavePointCloudPLY()
     {
 #if ENABLE_WINMD_SUPPORT
         var longpointCloud = researchMode.GetLongThrowPointCloudBuffer();
         var longpointMap = researchMode.GetLongDepthMapTextureBuffer();
-        DebugText.LOG(longpointMap[5040].ToString() + ", " + longpointMap[4440].ToString()+ ", " + longpointMap[4740].ToString());
+        // DebugText.LOG(longpointMap[5040].ToString() + ", " + longpointMap[4440].ToString()+ ", " + longpointMap[4740].ToString());
 #endif
-    }
+    }*/
+
 
     private static float[] jointDepth_z = new float[25];
     private static readonly int[] placement_offsets = {0,1,-1,320,-320};
-    public static float[] Apply_DepthPositionFromSensor(Vector3[] jointCoordinateVectors)
+    public float[] Apply_DepthPositionFromSensor(Vector3[] jointCoordinateVectors)
     {
 #if ENABLE_WINMD_SUPPORT
         Byte[] depthMapTextureBuffer = researchMode.GetLongDepthMapTextureBuffer();
-        Texture2D depthMapImageTexture = new Texture(256, 256);
+        Texture2D depthMapImageTexture = new Texture2D(256, 256);
 
         ImageConversion.LoadImage(depthMapImageTexture, depthMapTextureBuffer);
 
@@ -222,7 +239,7 @@ public class CameraImageFrameStream : MonoBehaviour
     {
         if (videoCapture == null)
         {
-            Console.WriteLine("ERROR: Did not fund VideoCapture object...");
+            UnityDebug.Log("ERROR: Did not fund VideoCapture object...");
             return;
         }
 
@@ -264,11 +281,12 @@ public class CameraImageFrameStream : MonoBehaviour
     {
         if (VCResult.success == false)
         {
-            Console.WriteLine("ERROR: Could not start video mode...");
+            UnityDebug.Log("ERROR: Could not start video mode...");
             return;
         }
 
-        Console.WriteLine("Video Mode Started!");
+        UnityDebug.Log("Video Mode Started!");
+        _videoModeStarted = true;
     }
 
 
@@ -287,6 +305,8 @@ public class CameraImageFrameStream : MonoBehaviour
                 return;
             }
         }
+
+        UnityDebug.Log("Frame Sample Acquired: Saving frame image...");
 
         // if byte array is null or not big enough to hold all the image bytes then
         // define a new array that is large enough, otherwise, use the existing array
