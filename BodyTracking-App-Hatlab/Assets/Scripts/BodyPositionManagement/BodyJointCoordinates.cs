@@ -93,8 +93,6 @@ public class BodyJointCoordinates
 
         UnityDebug.Log("    define offset from transform: " + _bodyAlignmentPosition.name);
 
-
-
         _bodyAlignmentOffset.x = _jointCoordinateVectors[0].x - _bodyAlignmentPosition.position.x;
         _bodyAlignmentOffset.y = _jointCoordinateVectors[0].y + _bodyAlignmentPosition.position.y;
         _bodyAlignmentOffset.z = _jointCoordinateVectors[0].z - _bodyAlignmentPosition.position.z;
