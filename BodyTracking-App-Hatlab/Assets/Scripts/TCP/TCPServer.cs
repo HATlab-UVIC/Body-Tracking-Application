@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityDebug = UnityEngine.Debug;
 using System;
 using System.IO;
 using System.Text;
@@ -26,12 +27,7 @@ public class TCPServer : MonoBehaviour
     public event TCP_Data_Read_EventHandler TCP_Data_Read;
     public static bool tcp_server_connected { get; set; } = false; // TODO: Change set back to private | Changed for testing
 
-
-    private static int DATAREADER_TIMOUT = 30000; // 30 seconds
-
-    public Vector3[] op_BodyPositionCoordinates;
-    Vector3 coordinates_offset = new Vector3(0, 0, 0);
-    Transform _alignment;
+    private static uint DATAREADER_TIMOUT = 60000; // 60 seconds
 
     // logging boolean variables
 
@@ -46,12 +42,10 @@ public class TCPServer : MonoBehaviour
 
     // initialize the TCP server to listen for incoming data from
     // the client on the computer
-    private void Start()
+    public void Start()
     {
         _bodyJointCoordinates = BodyJointCoordinates.Instance;
         TCP_Data_Read += _bodyJointCoordinates.getBodyCoordinatesFromTCPStream;
-
-        coordinates_offset = _alignment.position;
 
 #if !UNITY_EDITOR
 
@@ -68,6 +62,13 @@ public class TCPServer : MonoBehaviour
 #endif
     }
 
+    public void OnApplicationQuit()
+    {
+#if !UNITY_EDITOR
+        _listener.ConnectionReceived -= tcp_server_connection_established;
+#endif
+    }
+
 
 #if !UNITY_EDITOR
 
@@ -75,13 +76,14 @@ public class TCPServer : MonoBehaviour
     // start receiving data over TCP
     private async void start_tcp_server_listener()
     {
+        UnityDebug.Log("Local TCP Server Listener started:");
         try
         {
             // attach the listener to the data port
             await _listener.BindServiceNameAsync(connection_port);
-            Debug.Log("TCP Server listener started.");
+            UnityDebug.Log("TCP Server listener started.");
         }
-        catch (Exception e) { Debug.Log("ERROR: " + e.Message); }
+        catch (Exception e) { UnityDebug.Log("ERROR: " + e.Message); }
     }
 
 
@@ -91,6 +93,7 @@ public class TCPServer : MonoBehaviour
     {
         try
         {
+            UnityDebug.Log("Local TCP Server Connection Established");
             tcp_server_connected = true;
             // create a data reader object to read data from the input stream
             using (var _dataReader = new DataReader(args.Socket.InputStream))
@@ -101,7 +104,7 @@ public class TCPServer : MonoBehaviour
                     _dataReader.InputStreamOptions = InputStreamOptions.Partial;
 
                     // load data from the input stream
-                    await _dataReader.LoadAsync(DATAREADER_TIMOUT);
+                    await _dataReader.LoadAsync(60000);
                     var _inputStream_OP_Bytes_Length = _dataReader.ReadString(5);
 
                     // if input data buffer contains "b" as a suffix character, remove it
@@ -128,8 +131,8 @@ public class TCPServer : MonoBehaviour
         catch (Exception e) 
         {
             tcp_server_connected = false;
-            Debug.Log("TCP Server socket connection closed.");
-            Debug.Log("ERROR: " + e.Message);
+            UnityDebug.Log("TCP Server socket connection closed.");
+            UnityDebug.Log("ERROR: " + e.Message);
         }
     }
 

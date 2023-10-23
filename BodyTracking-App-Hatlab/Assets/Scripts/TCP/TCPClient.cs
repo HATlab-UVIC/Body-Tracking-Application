@@ -1,6 +1,6 @@
 using System;
-using System.Net.Sockets;
 using UnityEngine;
+using UnityDebug = UnityEngine.Debug;
 
 #if WINDOWS_UWP
 using Windows.Networking.Sockets;
@@ -21,7 +21,7 @@ public class TCPClient : MonoBehaviour
     // when the application goes into the background (not being used)
     // stop the TCP client connection
     private static bool startup_check = true;
-    private void OnApplicationFocus(bool appInUse)
+    public void OnApplicationFocus(bool appInUse)
     {
         // wait for user to say "connect" to start TCP
         if (startup_check)
@@ -47,12 +47,13 @@ public class TCPClient : MonoBehaviour
 
 
     // initializes/starts the connection between the local client and remote server
-    private async void start_tcp_client_connection()
+    public async void start_tcp_client_connection()
     {
         if (_dataStreamSocket != null) _dataStreamSocket.Dispose();
 
         try
         {
+            UnityDebug.Log("Attempting to connect to TCP Server...");
             _dataStreamSocket = new StreamSocket();
             var _hostName = new Windows.Networking.HostName(remoteHost_IP_address);
 
@@ -65,12 +66,12 @@ public class TCPClient : MonoBehaviour
 
             _dataReader.InputStreamOptions = InputStreamOptions.Partial;
             tcp_client_connected = true;
-            Debug.Log("Connected to TCP Server.");
+            UnityDebug.Log("Connected to TCP Server.");
         } 
         catch (Exception e)
         {
-            SocketErrorStatus webErrorStatus = SocketError.GetStatus(ex.GetBaseException().HResult);
-            Debug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
+            SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
+            UnityDebug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
         }
     }
 
@@ -88,7 +89,7 @@ public class TCPClient : MonoBehaviour
 
         _dataStreamSocket?.Dispose();
         tcp_client_connected = false;
-        Debug.Log("Disconnected from TCP Server.");
+        UnityDebug.Log("Disconnected from TCP Server.");
     }
 
 
@@ -120,11 +121,13 @@ public class TCPClient : MonoBehaviour
             // send image data over TCP
             await _dataWriter.StoreAsync();
             await _dataWriter.FlushAsync();
+
+            UnityDebug.Log("TCP Client Image Data Sent.");
         }
         catch (Exception e)
         {
-            SocketErrorStatus webErrorStatus = SocketError.GetStatus(ex.GetBaseException().HResult);
-            Debug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
+            SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
+            UnityDebug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
         }
 
         _lastMessageSent = true;
