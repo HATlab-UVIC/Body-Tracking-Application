@@ -39,6 +39,7 @@ public class CameraImageFrameStream : MonoBehaviour
     TCPServer tcp_server;
     bool tcp_client_init = false;
     private bool _videoModeStarted = false;
+    private bool first_frame_capture = true;
 
     IntPtr _spatialCoordinateSystem_Ptr;
 
@@ -78,6 +79,17 @@ public class CameraImageFrameStream : MonoBehaviour
 
         _mainThreadActions = new Queue<Action>();
 
+        // TODO: may move this to a voice command later
+        if (!tcp_client_init)
+        {
+#if WINDOWS_UWP
+            UnityDebug.Log("Starting TCP Client Connection:");
+            tcp_client.start_tcp_client_connection();
+
+            tcp_client_init = true;
+#endif
+        }
+
         // initializing the coordinate system reference
         //#if WINDOWS_UWP && XR_PLUGIN_WINDOWSMR
         // not upported in newer version of unity
@@ -102,18 +114,6 @@ public class CameraImageFrameStream : MonoBehaviour
 
     public void Update()
     {
-        // TODO: may move this to a voice command later
-        if (!tcp_client_init)
-        {
-#if WINDOWS_UWP
-            tcp_client.start_tcp_client_connection();
-            UnityDebug.Log("Starting TCP Client Connection:");
-
-            tcp_client_init = true;
-#endif
-        }
-
-
         //bug.WriteLine("CameraImageFrameStream Update...");
         // Handle the camera transform action updates stored in the queue
         lock (_mainThreadActions)
@@ -125,12 +125,15 @@ public class CameraImageFrameStream : MonoBehaviour
         }
 
         UnityDebug.Log("Local TCP Client Connection Status: " + TCPClient.tcp_client_connected.ToString());
-        if (!TCPClient.tcp_client_connected && _videoModeStarted) return;
+        if (!TCPClient.tcp_client_connected || !_videoModeStarted) return;
 
         // send image frame over TCP to computer.
         // do this every frame if TCP is connected //Note: may move this to FrameSampleAcquired handler
-        UnityDebug.Log("Sending Image Frame...");
-        SendSingleFrameAsync();
+        if (!first_frame_capture)
+        {
+            SendSingleFrameAsync();
+            UnityDebug.Log("Sending Image Frame...");
+        }
     }
 
 
@@ -306,7 +309,6 @@ public class CameraImageFrameStream : MonoBehaviour
             }
         }
 
-        UnityDebug.Log("Frame Sample Acquired: Saving frame image...");
 
         // if byte array is null or not big enough to hold all the image bytes then
         // define a new array that is large enough, otherwise, use the existing array
@@ -315,7 +317,10 @@ public class CameraImageFrameStream : MonoBehaviour
             _latestImageBytes = new byte[sample.dataLength];
         }
 
+        UnityDebug.Log("Frame Sample Acquired: Saving frame image... \n Image bytes: " + _latestImageBytes.Length.ToString());
+
         // save the frame image to _latestImageBytes
+        if (first_frame_capture) first_frame_capture = false;
         sample.CopyRawImageDataIntoBuffer(_latestImageBytes);
 
         // gets the camera to world matrix at the time of frame capture.
