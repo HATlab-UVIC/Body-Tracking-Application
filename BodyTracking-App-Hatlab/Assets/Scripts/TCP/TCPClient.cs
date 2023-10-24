@@ -24,11 +24,11 @@ public class TCPClient : MonoBehaviour
     public void OnApplicationFocus(bool appInUse)
     {
         // wait for user to say "connect" to start TCP
-        if (startup_check)
+        /*if (startup_check)
         {
             startup_check = false;
             return;
-        }
+        }*/
 
         // auto connect/disconnect to TCP on app focus
 #if WINDOWS_UWP
@@ -56,9 +56,12 @@ public class TCPClient : MonoBehaviour
             UnityDebug.Log("Attempting to connect to TCP Server...");
             _dataStreamSocket = new StreamSocket();
             var _hostName = new Windows.Networking.HostName(remoteHost_IP_address);
+            UnityDebug.Log("Remote Host IP :: (" + _hostName + ") Remote Connection Port :: (" + remote_connection_port + ")");
 
             // establish an asynchronous connection with a remote server
+            UnityDebug.Log("Local TCP Client :: pre-ConnectAsync()");
             await _dataStreamSocket.ConnectAsync(_hostName, remote_connection_port);
+            UnityDebug.Log("Local TCP Client :: ConnectAsync() Completed");
             
             // initializing the read and write objects for TCP
             _dataWriter = new DataWriter(_dataStreamSocket.OutputStream);
@@ -103,6 +106,8 @@ public class TCPClient : MonoBehaviour
 
         try
         {
+            UnityDebug.Log("SendPHImageAsync() :: Writing data for TCP message.");
+
             // writes the header "v" to stream to specify type of data being passed.
             // this is used for decoding on the computer side of the process.
             // [1] byte -> single char is 1 byte of data

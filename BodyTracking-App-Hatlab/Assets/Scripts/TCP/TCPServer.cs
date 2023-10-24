@@ -51,6 +51,7 @@ public class TCPServer : MonoBehaviour
 
         // must match the port number defined in the TCPClient.py file
         connection_port = "8080";
+        UnityDebug.Log("Local TCP Sever connection port: " + connection_port);
         _listener = new StreamSocketListener();
 
         // subscribe the tcp_server_connection_established() method to the
@@ -81,7 +82,7 @@ public class TCPServer : MonoBehaviour
         {
             // attach the listener to the data port
             await _listener.BindServiceNameAsync(connection_port);
-            UnityDebug.Log("TCP Server listener started.");
+            UnityDebug.Log("Local TCP Server listener started.");
         }
         catch (Exception e) { UnityDebug.Log("ERROR: " + e.Message); }
     }
@@ -91,13 +92,16 @@ public class TCPServer : MonoBehaviour
     // method is used to retrieve openpose data from the data stream
     private async void tcp_server_connection_established(StreamSocketListener sender, StreamSocketListenerConnectionReceivedEventArgs args)
     {
+            UnityDebug.Log("Trying :: Local TCP Server Connection Established");
+
         try
         {
-            UnityDebug.Log("Local TCP Server Connection Established");
             tcp_server_connected = true;
             // create a data reader object to read data from the input stream
             using (var _dataReader = new DataReader(args.Socket.InputStream))
             {
+                UnityDebug.Log("Local TCP Server Connection Established with Remote Client.");
+
                 while (true)
                 {
                     // read the input steam data in chunks rather than all at once
