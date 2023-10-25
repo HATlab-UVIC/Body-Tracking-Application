@@ -53,7 +53,7 @@ public class TCPClient : MonoBehaviour
 
         try
         {
-            UnityDebug.Log("Attempting to connect to TCP Server...");
+            UnityDebug.Log("Local TCP Client :: Attempting to connect to remote TCP Server...");
             _dataStreamSocket = new StreamSocket();
             var _hostName = new Windows.Networking.HostName(remoteHost_IP_address);
             UnityDebug.Log("Remote Host IP :: (" + _hostName + ") Remote Connection Port :: (" + remote_connection_port + ")");
@@ -69,7 +69,7 @@ public class TCPClient : MonoBehaviour
 
             _dataReader.InputStreamOptions = InputStreamOptions.Partial;
             tcp_client_connected = true;
-            UnityDebug.Log("Connected to TCP Server.");
+            UnityDebug.Log("Local TCP Client :: Connected to remote TCP Server.");
         } 
         catch (Exception e)
         {
@@ -106,7 +106,7 @@ public class TCPClient : MonoBehaviour
 
         try
         {
-            UnityDebug.Log("SendPHImageAsync() :: Writing data for TCP message.");
+            UnityDebug.Log("Local TCP Client :: SendPHImageAsync() :: Writing data for TCP message.");
 
             // writes the header "v" to stream to specify type of data being passed.
             // this is used for decoding on the computer side of the process.
@@ -127,7 +127,7 @@ public class TCPClient : MonoBehaviour
             await _dataWriter.StoreAsync();
             await _dataWriter.FlushAsync();
 
-            UnityDebug.Log("TCP Client Image Data Sent.");
+            UnityDebug.Log("Local TCP Client :: Image Data Sent.");
         }
         catch (Exception e)
         {

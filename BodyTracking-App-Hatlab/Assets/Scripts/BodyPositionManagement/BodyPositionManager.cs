@@ -12,7 +12,7 @@ public class BodyPositionManager : MonoBehaviour
     // initialize classes upon startup of the application
     public void Start()
     {
-        UnityDebug.Log("Starting BPM Initialization:");
+        UnityDebug.Log("BodyPositionManager :: Starting BPM Initialization...");
         // create the instance of BJC and initialize the joint coordinates to starting pose
         _bodyJointCoordinates = BodyJointCoordinates.Instance;
         _bodyJointCoordinates.InitJointCoordinates(BodyAlignmentPosition);
@@ -24,7 +24,7 @@ public class BodyPositionManager : MonoBehaviour
 
         
         AlignLimbObjects(_limbComponents._limbs);
-        UnityDebug.Log("Ending BPM Initialization");
+        UnityDebug.Log("BodyPositionManager :: Ending BPM Initialization.");
 
     }
 
@@ -32,12 +32,15 @@ public class BodyPositionManager : MonoBehaviour
     // on execution of each frame, update the body position data
     public void Update()
     {
+        UnityDebug.Log("BodyPositionManager :: Update Loop :: TCP Server ("+ TCPServer.tcp_server_connected.ToString()+") Joint Coordinates Set ("+ _bodyJointCoordinates._coordinateDataSet.ToString()+")");
         if (TCPServer.tcp_server_connected && _bodyJointCoordinates._coordinateDataSet)
         {
-            UnityDebug.Log("BPM Update... (TCP Connected & BJC coordinates set)");
+            UnityDebug.Log("BodyPositionManager :: Loop :: Updating body components and aligning gameObjects...");
 
             _limbComponents.UpdateBodyComponents(_bodyJointCoordinates._jointCoordinateVectors);
             AlignLimbObjects(_limbComponents._limbs);
+
+            UnityDebug.Log("BodyPositionManager :: Loop :: Update complete.");
 
             _bodyJointCoordinates._coordinateDataSet = false;
         }
@@ -46,11 +49,11 @@ public class BodyPositionManager : MonoBehaviour
 
     public void AlignLimbObjects(LimbStruct[] limbs)
     {
-        UnityDebug.Log("    applying coordinates to limb gameObjects...");
+        UnityDebug.Log("BodyPositionManager :: applying coordinates to limb gameObjects...");
 
         for (int i=0; i < limbs.Length; i++)
         {
-            bug.WriteLine(limbs[i].obj.name + " | " + limbs[i].limbOrigin.ToString() + " | " + limbs[i].limbEnd.ToString());
+            //UnityDebug.Log("BodyJointManager :: Limb data...\n" + limbs[i].obj.name + " | " + limbs[i].limbOrigin.ToString() + " | " + limbs[i].limbEnd.ToString());
             // calculate the position and rotation of the limb object
             limbs[i].obj.transform.SetPositionAndRotation(Vector3.Lerp(limbs[i].limbOrigin, limbs[i].limbEnd, 0.5f),
                                                       Quaternion.LookRotation(limbs[i].limbEnd - limbs[i].limbOrigin));
@@ -58,7 +61,7 @@ public class BodyPositionManager : MonoBehaviour
             float zScale = Vector3.Distance(limbs[i].limbOrigin, limbs[i].limbEnd);
             limbs[i].obj.transform.localScale = new Vector3(LimbComponents.DEFAULT_LIMB_SIZE, LimbComponents.DEFAULT_LIMB_SIZE, zScale);
         }
-        UnityDebug.Log("    end of applying coordinates to limb gameObjects.");
+        UnityDebug.Log("BodyPositionManager :: end of applying coordinates to limb gameObjects.");
 
     }
 }

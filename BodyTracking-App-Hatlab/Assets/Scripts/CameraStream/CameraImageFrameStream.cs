@@ -230,9 +230,13 @@ public class CameraImageFrameStream : MonoBehaviour
     // a local method reference for sending the image byte data over TCP
     public void SendSingleFrameAsync()
     {
-#if ENABLE_WINMD__SUPPORT && WINDOWS_UWP
-    tcp_client.SendPVImageAsync(_latestImageBytes);
+        lock (_latestImageBytes)
+        {
+#if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
+            tcp_client.SendPVImageAsync(_latestImageBytes);
 #endif
+        }
+
     }
 
 
