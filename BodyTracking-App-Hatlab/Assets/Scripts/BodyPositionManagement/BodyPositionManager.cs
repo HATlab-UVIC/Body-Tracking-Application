@@ -32,8 +32,8 @@ public class BodyPositionManager : MonoBehaviour
     // on execution of each frame, update the body position data
     public void Update()
     {
-        UnityDebug.Log("BodyPositionManager :: Update Loop :: TCP Server ("+ TCPServer.tcp_server_connected.ToString()+") Joint Coordinates Set ("+ _bodyJointCoordinates._coordinateDataSet.ToString()+")");
-        if (TCPServer.tcp_server_connected && _bodyJointCoordinates._coordinateDataSet)
+        UnityDebug.Log("BodyPositionManager :: Bool States :: TCP Server ("+ TCPServer.tcp_server_connected.ToString()+") Joint Coordinates Set ("+ _bodyJointCoordinates._coordinateDataSet.ToString()+")");
+        if (_bodyJointCoordinates._coordinateDataSet)
         {
             UnityDebug.Log("BodyPositionManager :: Loop :: Updating body components and aligning gameObjects...");
 
@@ -41,7 +41,6 @@ public class BodyPositionManager : MonoBehaviour
             AlignLimbObjects(_limbComponents._limbs);
 
             UnityDebug.Log("BodyPositionManager :: Loop :: Update complete.");
-
             _bodyJointCoordinates._coordinateDataSet = false;
         }
     }
