@@ -16,6 +16,7 @@ public class TCPClient : MonoBehaviour
 
     // TCP connection status variable
     public static bool tcp_client_connected { get; private set; } = false;
+    public static bool client_sending_image_bytes { get; private set; } = false;
 
 
     // when the application goes into the background (not being used)
@@ -92,7 +93,7 @@ public class TCPClient : MonoBehaviour
 
         _dataStreamSocket?.Dispose();
         tcp_client_connected = false;
-        UnityDebug.Log("Disconnected from TCP Server.");
+        UnityDebug.Log("Local TCP Client :: Disconnected from TCP Server.");
     }
 
 
@@ -107,6 +108,7 @@ public class TCPClient : MonoBehaviour
         try
         {
             UnityDebug.Log("Local TCP Client :: SendPHImageAsync() :: Writing data for TCP message.");
+            client_sending_image_bytes = true;
 
             // writes the header "v" to stream to specify type of data being passed.
             // this is used for decoding on the computer side of the process.
@@ -127,11 +129,13 @@ public class TCPClient : MonoBehaviour
             await _dataWriter.StoreAsync();
             await _dataWriter.FlushAsync();
 
+            client_sending_image_bytes = false;
             UnityDebug.Log("Local TCP Client :: Image Data Sent.");
         }
         catch (Exception e)
         {
             SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
+            UnityDebug.Log("Local TCP Client :: ERROR :: Error sending image to remote TCP server.");
             UnityDebug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
         }
 

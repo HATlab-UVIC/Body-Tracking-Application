@@ -58,7 +58,7 @@ public class CameraImageFrameStream : MonoBehaviour
     Queue<Action> _mainThreadActions;
     public void Start()
     {
-        UnityDebug.Log("Starting CameraStream:");
+        UnityDebug.Log("CameraImageFrameStream :: Starting Camera Stream...");
 
         // initializing the 3D depth sensor
 #if ENABLE_WINMD_SUPPORT
@@ -83,7 +83,7 @@ public class CameraImageFrameStream : MonoBehaviour
         if (!tcp_client_init)
         {
 #if WINDOWS_UWP
-            UnityDebug.Log("Starting TCP Client Connection:");
+            UnityDebug.Log("CameraImageFrameStream :: Starting TCP Client Connection...");
             tcp_client.start_tcp_client_connection();
 
             tcp_client_init = true;
@@ -124,15 +124,15 @@ public class CameraImageFrameStream : MonoBehaviour
             }
         }
 
-        UnityDebug.Log("Local TCP Client Connection Status: " + TCPClient.tcp_client_connected.ToString());
+        UnityDebug.Log("CameraImageFrameStream :: Update Loop :: TCP Client (" + TCPClient.tcp_client_connected.ToString() + ") Video Mode (" + _videoModeStarted.ToString() + ")");
         if (!TCPClient.tcp_client_connected || !_videoModeStarted) return;
 
         // send image frame over TCP to computer.
         // do this every frame if TCP is connected //Note: may move this to FrameSampleAcquired handler
         if (!first_frame_capture)
         {
+            UnityDebug.Log("CameraImageFrameStream :: Sending Image Frame...");
             SendSingleFrameAsync();
-            UnityDebug.Log("Sending Image Frame...");
         }
     }
 
@@ -246,7 +246,7 @@ public class CameraImageFrameStream : MonoBehaviour
     {
         if (videoCapture == null)
         {
-            UnityDebug.Log("ERROR: Did not fund VideoCapture object...");
+            UnityDebug.Log("CameraImageFrameStream :: ERROR :: Did not fund VideoCapture object...");
             return;
         }
 
@@ -288,11 +288,11 @@ public class CameraImageFrameStream : MonoBehaviour
     {
         if (VCResult.success == false)
         {
-            UnityDebug.Log("ERROR: Could not start video mode...");
+            UnityDebug.Log("CameraImageFrameStream :: ERROR :: Could not start video mode...");
             return;
         }
 
-        UnityDebug.Log("Video Mode Started!");
+        UnityDebug.Log("CameraImageFrameStream :: Video Mode Started!");
         _videoModeStarted = true;
     }
 
@@ -313,19 +313,23 @@ public class CameraImageFrameStream : MonoBehaviour
             }
         }
 
-
-        // if byte array is null or not big enough to hold all the image bytes then
-        // define a new array that is large enough, otherwise, use the existing array
-        if (_latestImageBytes == null || _latestImageBytes.Length < sample.dataLength)
+        // Dont copy image data into buffer if TCP Client is trying to send data
+        if (!TCPClient.client_sending_image_bytes)
         {
-            _latestImageBytes = new byte[sample.dataLength];
+            // if byte array is null or not big enough to hold all the image bytes then
+            // define a new array that is large enough, otherwise, use the existing array
+            if (_latestImageBytes == null || _latestImageBytes.Length < sample.dataLength)
+            {
+                _latestImageBytes = new byte[sample.dataLength];
+            }
+
+
+            // save the frame image to _latestImageBytes
+            if (first_frame_capture) first_frame_capture = false;
+            UnityDebug.Log("CameraImageFrameStream :: Frame Sample Acquired :: Saving frame image... \nImage bytes: " + _latestImageBytes.Length.ToString());
+            sample.CopyRawImageDataIntoBuffer(_latestImageBytes);
         }
-
-        UnityDebug.Log("Frame Sample Acquired: Saving frame image... \n Image bytes: " + _latestImageBytes.Length.ToString());
-
-        // save the frame image to _latestImageBytes
-        if (first_frame_capture) first_frame_capture = false;
-        sample.CopyRawImageDataIntoBuffer(_latestImageBytes);
+        
 
         // gets the camera to world matrix at the time of frame capture.
         // multiply with your gameObjects local transformation matrix to
