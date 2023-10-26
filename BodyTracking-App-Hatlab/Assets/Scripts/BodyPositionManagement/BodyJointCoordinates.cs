@@ -14,7 +14,7 @@ public class BodyJointCoordinates
     private static BodyJointCoordinates _instance;
     private CameraImageFrameStream _frameStream;
     public Vector3[] _jointCoordinateVectors;
-    private Transform BodyAlignmentPosition;
+    private Vector3 BodyAlignmentPosition;
     public Vector3 _bodyAlignmentOffset;
 
     public bool _coordinateDataSet { get; set; } = false;
@@ -75,9 +75,13 @@ public class BodyJointCoordinates
 
         // apply offset if initialization has been completed. Initialization is required
         // to define the body alignment offset value
-        if (_initJointCoordinatesCompleted) Apply_BodyAlignmentOffset();
-        _coordinateDataSet = true;
-        UnityDebug.Log("BodyJointCoordinates :: End of Getting coordinates from TCPStream");
+        if (_initJointCoordinatesCompleted)
+        {
+            Apply_BodyAlignmentOffset();
+            _coordinateDataSet = true;
+        }
+
+        UnityDebug.Log("BodyJointCoordinates :: End of Getting coordinates from TCPStream.");
 
     }
 
@@ -97,7 +101,7 @@ public class BodyJointCoordinates
         _bodyAlignmentOffset.y = _jointCoordinateVectors[0].y + _bodyAlignmentPosition.position.y;
         _bodyAlignmentOffset.z = _jointCoordinateVectors[0].z - _bodyAlignmentPosition.position.z;
 
-        BodyAlignmentPosition = _bodyAlignmentPosition;
+        BodyAlignmentPosition = _bodyAlignmentPosition.position;
 
         UnityDebug.Log("BodyJointCoordinates :: apply offset to coordinates");
 
@@ -115,11 +119,11 @@ public class BodyJointCoordinates
     private float[] jointDepthValues = new float[25];
     public void Apply_BodyAlignmentOffset()
     {
-        UnityDebug.Log("BodyJointCoordinates :: applying offset to coordinates...");
+        UnityDebug.Log("BodyJointCoordinates :: applying offset to coordinates... \n");
 
-        _jointCoordinateVectors[0].x = BodyAlignmentPosition.position.x;
-        _jointCoordinateVectors[0].y = - BodyAlignmentPosition.position.y;
-        _jointCoordinateVectors[0].z = BodyAlignmentPosition.position.z;
+        _jointCoordinateVectors[0].x = BodyAlignmentPosition.x;
+        _jointCoordinateVectors[0].y = - BodyAlignmentPosition.y;
+        _jointCoordinateVectors[0].z = BodyAlignmentPosition.z;
 
         switch (DIMENSION_TYPE)
         {
