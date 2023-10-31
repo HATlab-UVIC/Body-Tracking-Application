@@ -131,7 +131,6 @@ public class CameraImageFrameStream : MonoBehaviour
         // do this every frame if TCP is connected //Note: may move this to FrameSampleAcquired handler
         if (!first_frame_capture)
         {
-            UnityDebug.Log("CameraImageFrameStream :: Sending Image Frame...");
             SendSingleFrameAsync();
         }
     }
@@ -230,13 +229,10 @@ public class CameraImageFrameStream : MonoBehaviour
     // a local method reference for sending the image byte data over TCP
     public void SendSingleFrameAsync()
     {
-        lock (_latestImageBytes)
-        {
 #if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
+            UnityDebug.Log("CameraImageFrameStream :: Sending Image Frame...");
             tcp_client.SendPVImageAsync(_latestImageBytes);
 #endif
-        }
-
     }
 
 
@@ -246,7 +242,7 @@ public class CameraImageFrameStream : MonoBehaviour
     {
         if (videoCapture == null)
         {
-            UnityDebug.Log("CameraImageFrameStream :: ERROR :: Did not fund VideoCapture object...");
+            UnityDebug.Log("CameraImageFrameStream :: ERROR :: Did not find VideoCapture object...");
             return;
         }
 
@@ -323,9 +319,9 @@ public class CameraImageFrameStream : MonoBehaviour
                 _latestImageBytes = new byte[sample.dataLength];
             }
 
-
             // save the frame image to _latestImageBytes
             if (first_frame_capture) first_frame_capture = false;
+
             UnityDebug.Log("CameraImageFrameStream :: Frame Sample Acquired :: Saving frame image... \nImage bytes: " + _latestImageBytes.Length.ToString());
             sample.CopyRawImageDataIntoBuffer(_latestImageBytes);
         }
