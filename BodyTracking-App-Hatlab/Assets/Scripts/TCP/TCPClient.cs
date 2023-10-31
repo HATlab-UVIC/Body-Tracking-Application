@@ -1,4 +1,5 @@
 using System;
+//using System.Net.Sockets;
 using UnityEngine;
 using UnityDebug = UnityEngine.Debug;
 
@@ -39,8 +40,16 @@ public class TCPClient : MonoBehaviour
     }
 
 
+    public void OnApplicationQuit()
+    {
 #if WINDOWS_UWP
-    
+        SendAppCloseMessage();
+#endif
+    }
+
+
+#if WINDOWS_UWP
+
     // defining necessary variables for data communication over TCP
     StreamSocket _dataStreamSocket = null;
     public DataWriter _dataWriter;
@@ -125,6 +134,9 @@ public class TCPClient : MonoBehaviour
             //                              represent the image)
             _dataWriter.WriteBytes(image_data);
 
+            UnityDebug.Log("Local TCP Client :: SendPHImageAsync() :: TCP message data...\n" +
+                            "Header: v\n" + "Data Length: " + image_data.Length);
+
             // send image data over TCP
             await _dataWriter.StoreAsync();
             await _dataWriter.FlushAsync();
@@ -135,11 +147,34 @@ public class TCPClient : MonoBehaviour
         catch (Exception e)
         {
             SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
-            UnityDebug.Log("Local TCP Client :: ERROR :: Error sending image to remote TCP server.");
+            UnityDebug.Log("Local TCP Client :: ERROR :: Error sending image to remote TCP server.\n" + e.Message);
             UnityDebug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
         }
 
         _lastMessageSent = true;
+    }
+
+
+    // write header byte to denote end of application running to stop pc server side
+    public async void SendAppCloseMessage()
+    {
+        try
+        {
+            UnityDebug.Log("Local TCP Client :: App End :: Sending TCP shutdown message...");
+            _dataWriter.WriteString("e");
+
+            await _dataWriter.StoreAsync();
+            await _dataWriter.FlushAsync();
+
+            UnityDebug.Log("Local TCP Client :: App End :: Shutdown message sent.");
+        }
+        catch (Exception e)
+        {
+            SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
+            UnityDebug.Log("Local TCP Client :: ERROR :: Error sending end message to remote TCP server.\n" + e.Message);
+            UnityDebug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
+        }
+
     }
 
 #endif
