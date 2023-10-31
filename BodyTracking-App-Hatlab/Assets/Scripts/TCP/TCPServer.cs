@@ -84,7 +84,7 @@ public class TCPServer : MonoBehaviour
             await _listener.BindServiceNameAsync(connection_port);
             UnityDebug.Log("Local TCP Server :: listener started.");
         }
-        catch (Exception e) { UnityDebug.Log("ERROR: " + e.Message); }
+        catch (Exception e) { UnityDebug.Log("Local TCP Server :: ERROR :: Error in _listener.BindServiceNameAsync \n" + e.Message); }
     }
 
 
