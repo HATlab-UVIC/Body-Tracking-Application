@@ -87,8 +87,6 @@ public class TCPServer : MonoBehaviour
     // method is used to retrieve openpose data from the data stream
     private async void tcp_server_connection_established(StreamSocketListener sender, StreamSocketListenerConnectionReceivedEventArgs args)
     {
-        UnityDebug.Log("Local TCP Server :: Trying :: tcp_server_connection_established()");
-
         try
         {
             tcp_server_connected = true;
@@ -104,9 +102,9 @@ public class TCPServer : MonoBehaviour
                     _dataReader.InputStreamOptions = InputStreamOptions.Partial;
 
                     // load data from the input stream
-                    UnityDebug.Log("Local TCP Server :: Data Reader :: pre-LoadAsync()...");
+                        //UnityDebug.Log("Local TCP Server :: Data Reader :: pre-LoadAsync()...");
                     await _dataReader.LoadAsync(60000);
-                    UnityDebug.Log("Local TCP Server :: Data Reader :: LoadAsync() completed.");
+                        //UnityDebug.Log("Local TCP Server :: Data Reader :: LoadAsync() completed.");
 
                     try
                     {
@@ -123,18 +121,18 @@ public class TCPServer : MonoBehaviour
                             // convert string of number of image bytes to unsinged 32-bit integer
                             // to be used to retreive the image bytes from the data stream
                             OP_Bytes_Length = Convert.ToUInt32(_inputStream_OP_Bytes_Length);
-                            UnityDebug.Log("Local TCP Server :: Input stream byte length defined.");
+                                //UnityDebug.Log("Local TCP Server :: Input stream byte length defined.");
                             var _inputStream_OP_Bytes_Data = _dataReader.ReadString(OP_Bytes_Length);
-                            UnityDebug.Log("Local TCP Server :: Data Reader :: Read input stream bytes.");
+                                //UnityDebug.Log("Local TCP Server :: Data Reader :: Read input stream bytes.");
 
                             _inputStream_OP_Bytes_Data = _inputStream_OP_Bytes_Data.Substring(1, _inputStream_OP_Bytes_Data.Length - 2) + "==";
 
                             OP_Bytes_Data = Convert.FromBase64String(_inputStream_OP_Bytes_Data);
-                            UnityDebug.Log("Local TCP Server :: Input stream bytes convert from b64.");
+                                //UnityDebug.Log("Local TCP Server :: Input stream bytes convert from b64.");
                             _bodyCoordinatesData = Encoding.UTF8.GetString(OP_Bytes_Data);
-                            UnityDebug.Log("Local TCP Server :: Input stream bytes :: Encoded as UTF8.");
+                                //UnityDebug.Log("Local TCP Server :: Input stream bytes :: Encoded as UTF8.");
 
-                            UnityDebug.Log("Local TCP Server :: Remote data read. \n" + _bodyCoordinatesData);
+                                //UnityDebug.Log("Local TCP Server :: Remote data read. \n" + _bodyCoordinatesData);
                         }
                         catch { UnityDebug.Log("Local TCP Server :: ERROR : Error converting TCP data to coordinate string."); }
                     }

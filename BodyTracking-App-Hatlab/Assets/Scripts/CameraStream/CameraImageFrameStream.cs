@@ -37,9 +37,8 @@ public class CameraImageFrameStream : MonoBehaviour
     VideoCapture _videoCapture;
     TCPClient tcp_client;
     TCPServer tcp_server;
-    bool tcp_client_init = false;
     private bool _videoModeStarted = false;
-    private bool first_frame_capture = true;
+    private bool _firstFrameCaptured = true;
 
     IntPtr _spatialCoordinateSystem_Ptr;
 
@@ -80,19 +79,14 @@ public class CameraImageFrameStream : MonoBehaviour
         _mainThreadActions = new Queue<Action>();
 
         // TODO: may move this to a voice command later
-        if (!tcp_client_init)
-        {
 #if WINDOWS_UWP
             UnityDebug.Log("CameraImageFrameStream :: Starting TCP Client Connection...");
             tcp_client.start_tcp_client_connection();
-
-            tcp_client_init = true;
 #endif
-        }
 
         // initializing the coordinate system reference
         //#if WINDOWS_UWP && XR_PLUGIN_WINDOWSMR
-        // not upported in newer version of unity
+        // not supported in newer version of unity
         // _spatialCoordinateSystem_Ptr = UnityEngine.XR.WindowsMR.WindowsMREnvironment.OriginSpatialCoordinateSystem;
 
 #if WINDOWS_UWP && XR_PLUGIN_OPENXR
@@ -114,7 +108,6 @@ public class CameraImageFrameStream : MonoBehaviour
 
     public void Update()
     {
-        //bug.WriteLine("CameraImageFrameStream Update...");
         // Handle the camera transform action updates stored in the queue
         lock (_mainThreadActions)
         {
@@ -124,15 +117,12 @@ public class CameraImageFrameStream : MonoBehaviour
             }
         }
 
-        UnityDebug.Log("CameraImageFrameStream :: Update Loop :: TCP Client (" + TCPClient.tcp_client_connected.ToString() + ") Video Mode (" + _videoModeStarted.ToString() + ")");
+            //UnityDebug.Log("CameraImageFrameStream :: Update Loop :: TCP Client (" + TCPClient.tcp_client_connected.ToString() + ") Video Mode (" + _videoModeStarted.ToString() + ")");
         if (!TCPClient.tcp_client_connected || !_videoModeStarted) return;
 
         // send image frame over TCP to computer.
-        // do this every frame if TCP is connected //Note: may move this to FrameSampleAcquired handler
-        if (!first_frame_capture)
-        {
-            SendSingleFrameAsync();
-        }
+        // do this every frame if TCP is connected 
+        if (!_firstFrameCaptured) { SendSingleFrameAsync(); }
     }
 
 
@@ -230,7 +220,7 @@ public class CameraImageFrameStream : MonoBehaviour
     public void SendSingleFrameAsync()
     {
 #if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
-            UnityDebug.Log("CameraImageFrameStream :: Sending Image Frame...");
+                //UnityDebug.Log("CameraImageFrameStream :: Sending Image Frame...");
             tcp_client.SendPVImageAsync(_latestImageBytes);
 #endif
     }
@@ -320,9 +310,9 @@ public class CameraImageFrameStream : MonoBehaviour
             }
 
             // save the frame image to _latestImageBytes
-            if (first_frame_capture) first_frame_capture = false;
+            if (_firstFrameCaptured) _firstFrameCaptured = false;
 
-            UnityDebug.Log("CameraImageFrameStream :: Frame Sample Acquired :: Saving frame image... \nImage bytes: " + _latestImageBytes.Length.ToString());
+                //UnityDebug.Log("CameraImageFrameStream :: Frame Sample Acquired :: Saving frame image... \nImage bytes: " + _latestImageBytes.Length.ToString());
             sample.CopyRawImageDataIntoBuffer(_latestImageBytes);
         }
         

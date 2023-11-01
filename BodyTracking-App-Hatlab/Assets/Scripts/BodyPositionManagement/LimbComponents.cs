@@ -49,8 +49,6 @@ public class LimbComponents
     // the joint coordinates
     public void InitLimbs(GameObject parentObj, Vector3[] jointCoodinates)
     {
-        bug.WriteLine("    initializing limb components...");
-
         int i = 0;
         _limbs = new LimbStruct[16];
         foreach (var key in LimbAssignmentKey._limbKeys)
@@ -61,10 +59,7 @@ public class LimbComponents
         }
 
         UpdateBodyComponents(jointCoodinates);
-        bug.WriteLine("    end of initializing limb components.");
     }
-
-
 }
 
 
