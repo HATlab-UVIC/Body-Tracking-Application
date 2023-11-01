@@ -47,7 +47,7 @@ public class BodyJointCoordinates
         // still using joint data in BodyPositionManager.
         // Will return false when update is done
         if (_coordinateDataSet) return;
-        UnityDebug.Log("BodyJointCoordinates :: Getting coordinates from TCPStream...");
+            //UnityDebug.Log("BodyJointCoordinates :: Getting coordinates from TCPStream...");
 
 
         OP_Body_Coordinates = OP_Body_Coordinates.Substring(3, OP_Body_Coordinates.Length - 5);
@@ -59,7 +59,7 @@ public class BodyJointCoordinates
         string[] _vectorComponents;
         float[] xyz_component = new float[3];
         Vector3 _pointVector;
-        UnityDebug.Log("BodyJointCoordinates :: Number of Vectors -> " + _coordinateVectors.Length.ToString());
+            //UnityDebug.Log("BodyJointCoordinates :: Number of Vectors -> " + _coordinateVectors.Length.ToString());
         for (int i = 0; i < _coordinateVectors.Length; i++)
         {
             // split based on any number of whitespaces
@@ -81,7 +81,7 @@ public class BodyJointCoordinates
             _coordinateDataSet = true;
         }
 
-        UnityDebug.Log("BodyJointCoordinates :: End of Getting coordinates from TCPStream.");
+            //UnityDebug.Log("BodyJointCoordinates :: End of Getting coordinates from TCPStream.");
 
     }
 
@@ -91,25 +91,36 @@ public class BodyJointCoordinates
     private static readonly string initBodyPose_string = "[[[1.03118134e+02 6.99873962e+01 2.88619578e-01]\n  [1.03757507e+02 8.75215988e+01 7.35780954e-01]\n  [8.55773468e+01 9.07415543e+01 7.16933608e-01]\n  [6.34864426e+01 6.54687424e+01 7.07642257e-01]\n  [8.04082489e+01 4.20597572e+01 7.24343121e-01]\n  [1.21941612e+02 8.62053604e+01 7.26475894e-01]\n  [1.27820770e+02 6.41296692e+01 7.71827757e-01]\n  [1.08954285e+02 4.01150093e+01 7.46629119e-01]\n  [1.03761574e+02 1.38190353e+02 6.38162971e-01]\n  [9.07512207e+01 1.38192856e+02 6.32528305e-01]\n  [6.02510033e+01 1.58949036e+02 8.16145182e-01]\n  [6.47959747e+01 2.27809174e+02 5.01409650e-01]\n  [1.17400948e+02 1.38182007e+02 6.20658875e-01]\n  [1.37524857e+02 1.60911041e+02 7.70069838e-01]\n  [1.23897186e+02 2.15476379e+02 6.96041703e-01]\n  [9.92138443e+01 6.54317474e+01 3.01264435e-01]\n  [1.06361214e+02 6.54366455e+01 2.87769794e-01]\n  [9.07777481e+01 6.86885452e+01 3.72277319e-01]\n  [1.11543053e+02 6.93356628e+01 1.21816687e-01]\n  [1.42713959e+02 2.30408524e+02 6.66928828e-01]\n  [1.43365540e+02 2.27155731e+02 7.03941524e-01]\n  [1.18062080e+02 2.20677872e+02 5.86193681e-01]\n  [7.12915802e+01 2.32383850e+02 2.03017890e-01]\n  [6.41454773e+01 2.37560364e+02 2.09143758e-01]\n  [6.60891037e+01 2.32355682e+02 2.48061493e-01]]";
     public void InitJointCoordinates(Transform _bodyAlignmentPosition)
     {
-        UnityDebug.Log("BodyJointCoordinates :: initializing joint coordinates...");
+            //UnityDebug.Log("BodyJointCoordinates :: initializing joint coordinates...");
 
         getBodyCoordinatesFromTCPStream(initBodyPose_string);
 
-        UnityDebug.Log("BodyJointCoordinates :: define offset from transform: " + _bodyAlignmentPosition.name);
-
-        _bodyAlignmentOffset.x = _jointCoordinateVectors[0].x - _bodyAlignmentPosition.position.x;
-        _bodyAlignmentOffset.y = _jointCoordinateVectors[0].y + _bodyAlignmentPosition.position.y;
-        _bodyAlignmentOffset.z = _jointCoordinateVectors[0].z - _bodyAlignmentPosition.position.z;
+        //UnityDebug.Log("BodyJointCoordinates :: define offset from transform: " + _bodyAlignmentPosition.name);
 
         BodyAlignmentPosition = _bodyAlignmentPosition.position;
 
-        UnityDebug.Log("BodyJointCoordinates :: apply offset to coordinates");
+        UnityDebug.Log($"BodyJointCoordinates :: Body Alignment Position: \n({BodyAlignmentPosition.x:F3}, {BodyAlignmentPosition.y:F3}, {BodyAlignmentPosition.z:F3})");
+
+        CalculateBodyAlignmentOffset();
+
+        UnityDebug.Log($"BodyJointCoordinates :: Body Alignment Offset Vector: \n({_bodyAlignmentOffset.x:F3}, {_bodyAlignmentOffset.y:F3}, {_bodyAlignmentOffset.z:F3})");
+
+        
+        //UnityDebug.Log("BodyJointCoordinates :: apply offset to coordinates");
 
         Apply_BodyAlignmentOffset();
 
         _initJointCoordinatesCompleted = true;
-        UnityDebug.Log("BodyJointCoordinates :: body joint coordinates set.");
+            //UnityDebug.Log("BodyJointCoordinates :: body joint coordinates set.");
 
+    }
+
+
+    private void CalculateBodyAlignmentOffset()
+    {
+        _bodyAlignmentOffset.x = _jointCoordinateVectors[0].x - BodyAlignmentPosition.x;
+        _bodyAlignmentOffset.y = _jointCoordinateVectors[0].y + BodyAlignmentPosition.y;
+        _bodyAlignmentOffset.z = _jointCoordinateVectors[0].z - BodyAlignmentPosition.z;
     }
 
 
@@ -117,26 +128,36 @@ public class BodyJointCoordinates
     // '0': 2D only   '1': 3D Depth
     private readonly int DIMENSION_TYPE = 0; 
     private float[] jointDepthValues = new float[25];
+    private string coordinateDebugLog = "";
     public void Apply_BodyAlignmentOffset()
     {
-        UnityDebug.Log("BodyJointCoordinates :: applying offset to coordinates... \n");
+        //UnityDebug.Log("BodyJointCoordinates :: applying offset to coordinates... \n");
+
+        CalculateBodyAlignmentOffset();
 
         _jointCoordinateVectors[0].x = BodyAlignmentPosition.x;
         _jointCoordinateVectors[0].y = - BodyAlignmentPosition.y;
         _jointCoordinateVectors[0].z = BodyAlignmentPosition.z;
 
+        coordinateDebugLog = $"Joint 0: ({_jointCoordinateVectors[0].x:F3}, {_jointCoordinateVectors[0].y:F3}, {_jointCoordinateVectors[0].z:F3})\n";
+
         switch (DIMENSION_TYPE)
         {
             // using only 2D image processing
             case 0:
-                UnityDebug.Log("BodyJointCoordinates :: applying 2D offset...");
+                    //UnityDebug.Log("BodyJointCoordinates :: applying 2D offset...");
 
                 for (int i = 1; i < _jointCoordinateVectors.Length; i++)
                 {
                     // calculate re-aligned position of joint coordinate
                     _jointCoordinateVectors[i] -= _bodyAlignmentOffset;
                     _jointCoordinateVectors[i].y *= -1;
+
+                    coordinateDebugLog += $"Joint {i}: ({_jointCoordinateVectors[i].x:F3}, {_jointCoordinateVectors[i].y:F3}, {_jointCoordinateVectors[i].z:F3})\n";
                 }
+
+                UnityDebug.Log("BodyJointCoordinates :: Post-Offset Joint Coordinates...\n\n" + coordinateDebugLog);
+                coordinateDebugLog = "";
                 break;
 
             // enable use of 3D depth camera for calculating depth coordinate
