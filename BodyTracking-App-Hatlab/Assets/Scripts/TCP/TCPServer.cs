@@ -132,7 +132,7 @@ public class TCPServer : MonoBehaviour
                             _bodyCoordinatesData = Encoding.UTF8.GetString(OP_Bytes_Data);
                                 //UnityDebug.Log("Local TCP Server :: Input stream bytes :: Encoded as UTF8.");
 
-                                //UnityDebug.Log("Local TCP Server :: Remote data read. \n" + _bodyCoordinatesData);
+                                UnityDebug.Log("Local TCP Server :: Remote data read. \n" + _bodyCoordinatesData);
                         }
                         catch { UnityDebug.Log("Local TCP Server :: ERROR : Error converting TCP data to coordinate string."); }
                     }
