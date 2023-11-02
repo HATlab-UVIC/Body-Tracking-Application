@@ -50,6 +50,7 @@ public class CameraImageFrameStream : MonoBehaviour
     HL2ResearchMode researchMode;
 #endif
 
+    public CameraImageFrameStream() {}
 
     // --------------------------------------
     // Initialize components on program start
@@ -61,7 +62,18 @@ public class CameraImageFrameStream : MonoBehaviour
 
         // initializing the 3D depth sensor
 #if ENABLE_WINMD_SUPPORT
-        researchMode = new HL2ResearchMode();
+        UnityDebug.Log("CameraImageFrameStream :: HL2ResearchMode Setup...");
+
+        try
+        {
+            researchMode = new HL2ResearchMode();
+            UnityDebug.Log("CameraImageFrameStream :: New instance of research mode created.\n" + researchMode);
+        } 
+        catch (Exception e)
+        {
+            UnityDebug.Log("CameraImageFrameStream :: ERROR :: Error initializing research mode.\n" + e.Message);
+        }
+        
         researchMode.InitializeLongDepthSensor();
 
         researchMode.SetPointCloudDepthOffset(0);
@@ -69,6 +81,7 @@ public class CameraImageFrameStream : MonoBehaviour
 
 #if WINDOWS_UWP && XR_PLUGIN_OPENXR
         researchMode.SetReferenceCoordinateSystem(_spatialCoordinateSystem);
+        UnityDebug.Log("CameraImageFrameStream :: HL2ResearchMode Setup Completed.");
 #endif
 #endif
 
@@ -173,45 +186,64 @@ public class CameraImageFrameStream : MonoBehaviour
     private static readonly int[] placement_offsets = {0,1,-1,320,-320};
     public float[] Apply_DepthPositionFromSensor(Vector3[] jointCoordinateVectors)
     {
-#if ENABLE_WINMD_SUPPORT
-        Byte[] depthMapTextureBuffer = researchMode.GetLongDepthMapTextureBuffer();
-        Texture2D depthMapImageTexture = new Texture2D(256, 256);
-
-        ImageConversion.LoadImage(depthMapImageTexture, depthMapTextureBuffer);
-
-        Vector2 pivot = new Vector2(0.5f, 0.5f);
-        Rect spriteRect = new Rect(0, 0, depthMapImageTexture.width, depthMapImageTexture.height);
-        _depthImageTexture.overrideSprite = Sprite.Create(depthMapImageTexture, spriteRect, pivot);
-
-        _depthImageRaw.texture = depthMapImageTexture;
-
-        // TODO: code above may be unnecessary (except for depthMapTextureBuffer)
-        // appears to only be used for displaying depth map, not needed for other purposes.
-
-
-        float x, y;
-        float depthValue;
-        int placement;
-        for (int i=0; i<jointCoordinateVectors.Length; i++)
+        if (jointCoordinateVectors == null)
         {
-            x = jointCoordinateVectors[i].x + 30.0f;
-            y = jointCoordinateVectors[i].y + 10.0f;
-
-            // possibly calculating the index offset which correlates 2D image pixel data to depth buffer
-            placement = (int)(y * 320 + x);
-            depthValue = 0.0f;
-
-            // calculate the depth value
-            foreach (int offset in placement_offsets)
-            {
-                depthValue += -float.Parse(depthMapTextureBuffer[placement + offset].ToString()) / 80;
-            }
-
-            depthValue /= placement_offsets.Length;
-            jointDepth_z[i] = depthValue + 9.0f;
+            UnityDebug.Log("CameraImageFrameStream :: ERROR :: Error with joint coordinates.");
+            return jointDepth_z;
         }
-#endif
+        UnityDebug.Log("CameraImageFrameStream :: Getting depth map texture buffer...");
+#if ENABLE_WINMD_SUPPORT
 
+        try
+        {
+            Byte[] depthMapTextureBuffer = researchMode.GetLongDepthMapTextureBuffer();
+
+            /*Texture2D depthMapImageTexture = new Texture2D(256, 256);
+
+            ImageConversion.LoadImage(depthMapImageTexture, depthMapTextureBuffer);
+
+            Vector2 pivot = new Vector2(0.5f, 0.5f);
+            Rect spriteRect = new Rect(0, 0, depthMapImageTexture.width, depthMapImageTexture.height);
+            _depthImageTexture.overrideSprite = Sprite.Create(depthMapImageTexture, spriteRect, pivot);
+
+            _depthImageRaw.texture = depthMapImageTexture;*/
+
+            // TODO: code above may be unnecessary (except for depthMapTextureBuffer)
+            // appears to only be used for displaying depth map, not needed for other purposes.
+
+            UnityDebug.Log("CameraImageFrameStream :: Calculating joint depth values...");
+            float x, y;
+            float depthValue;
+            int placement;
+            for (int i=0; i<jointCoordinateVectors.Length; i++)
+            {
+                x = jointCoordinateVectors[i].x + 30.0f;
+                y = jointCoordinateVectors[i].y + 10.0f;
+
+                // possibly calculating the index offset which correlates 2D image pixel data to depth buffer
+                placement = (int)(y * 320 + x);
+                depthValue = 0.0f;
+
+                // calculate the depth value
+                foreach (int offset in placement_offsets)
+                {
+                    depthValue += -float.Parse(depthMapTextureBuffer[placement + offset].ToString()) / 80;
+                }
+
+                depthValue /= placement_offsets.Length;
+                jointDepth_z[i] = depthValue + 9.0f;
+            }
+    
+            UnityDebug.Log("CameraImageFrameStream :: Depths calculated.");
+            return jointDepth_z;
+        }
+        catch (Exception e)
+        {
+            UnityDebug.Log("CameraImageFrameStream :: ERROR :: Error getting long depth map texture buffer.");
+            return jointDepth_z;
+        }
+        
+#endif
         return jointDepth_z;
     }
 
