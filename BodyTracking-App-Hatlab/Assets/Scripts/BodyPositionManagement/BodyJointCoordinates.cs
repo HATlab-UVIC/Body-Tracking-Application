@@ -22,7 +22,11 @@ public class BodyJointCoordinates
 
 
     // private constructor method
-    private BodyJointCoordinates() { _jointCoordinateVectors = new Vector3[25]; }
+    private BodyJointCoordinates() 
+    { 
+        _jointCoordinateVectors = new Vector3[25]; 
+        _frameStream = new CameraImageFrameStream();
+    }
 
     // singleton constructor. Used for defining only a single instance that can be referenced
     // from different classes
@@ -100,11 +104,6 @@ public class BodyJointCoordinates
         BodyAlignmentPosition = _bodyAlignmentPosition.position;
 
         UnityDebug.Log($"BodyJointCoordinates :: Body Alignment Position: \n({BodyAlignmentPosition.x:F3}, {BodyAlignmentPosition.y:F3}, {BodyAlignmentPosition.z:F3})");
-
-        CalculateBodyAlignmentOffset();
-
-        UnityDebug.Log($"BodyJointCoordinates :: Body Alignment Offset Vector: \n({_bodyAlignmentOffset.x:F3}, {_bodyAlignmentOffset.y:F3}, {_bodyAlignmentOffset.z:F3})");
-
         
         //UnityDebug.Log("BodyJointCoordinates :: apply offset to coordinates");
 
@@ -112,7 +111,6 @@ public class BodyJointCoordinates
 
         _initJointCoordinatesCompleted = true;
             //UnityDebug.Log("BodyJointCoordinates :: body joint coordinates set.");
-
     }
 
 
@@ -126,7 +124,7 @@ public class BodyJointCoordinates
 
     // Change DIMENSION_TYPE integer to switch between alignment modes
     // '0': 2D only   '1': 3D Depth
-    private readonly int DIMENSION_TYPE = 0; 
+    private readonly int DIMENSION_TYPE = 1; 
     private float[] jointDepthValues = new float[25];
     private string coordinateDebugLog = "";
     public void Apply_BodyAlignmentOffset()
@@ -134,14 +132,18 @@ public class BodyJointCoordinates
         //UnityDebug.Log("BodyJointCoordinates :: applying offset to coordinates... \n");
 
         CalculateBodyAlignmentOffset();
+        UnityDebug.Log($"BodyJointCoordinates :: Body Alignment Offset Vector: \n({_bodyAlignmentOffset.x:F3}, {_bodyAlignmentOffset.y:F3}, {_bodyAlignmentOffset.z:F3})");
+
+        // calculate the depth values of the joint coordinates
+        if (DIMENSION_TYPE == 1) jointDepthValues = _frameStream.Apply_DepthPositionFromSensor(_jointCoordinateVectors);
 
         _jointCoordinateVectors[0].x = BodyAlignmentPosition.x;
         _jointCoordinateVectors[0].y = - BodyAlignmentPosition.y;
         _jointCoordinateVectors[0].z = BodyAlignmentPosition.z;
 
-        coordinateDebugLog = $"Joint 0: ({_jointCoordinateVectors[0].x:F3}, {_jointCoordinateVectors[0].y:F3}, {_jointCoordinateVectors[0].z:F3})\n";
+        //coordinateDebugLog = $"Joint 0: ({_jointCoordinateVectors[0].x:F3}, {_jointCoordinateVectors[0].y:F3}, {_jointCoordinateVectors[0].z:F3})\n";
 
-        switch (DIMENSION_TYPE)
+        switch (DIMENSION_TYPE) 
         {
             // using only 2D image processing
             case 0:
@@ -162,14 +164,14 @@ public class BodyJointCoordinates
 
             // enable use of 3D depth camera for calculating depth coordinate
             case 1:
-                // calculate the depth values of the joint coordinates
-                jointDepthValues = _frameStream.Apply_DepthPositionFromSensor(_jointCoordinateVectors);
+                
 
                 for (int i = 0; i < _jointCoordinateVectors.Length; i++)
                 {
                     if (i == 0)
                     {
                         _jointCoordinateVectors[i].z = jointDepthValues[i];
+                        coordinateDebugLog = $"Joint 0: ({_jointCoordinateVectors[i].x:F3}, {_jointCoordinateVectors[i].y:F3}, {_jointCoordinateVectors[i].z:F3})\n";
                         continue;
                     }
                     
@@ -180,7 +182,12 @@ public class BodyJointCoordinates
 
                     // assign calculated depth value to joint
                     _jointCoordinateVectors[i].z = jointDepthValues[i];
+
+                    coordinateDebugLog += $"Joint {i}: ({_jointCoordinateVectors[i].x:F3}, {_jointCoordinateVectors[i].y:F3}, {_jointCoordinateVectors[i].z:F3})\n";
                 }
+
+                UnityDebug.Log("BodyJointCoordinates :: Post-Offset Joint Coordinates...\n\n" + coordinateDebugLog);
+                coordinateDebugLog = "";
                 break;
 
         }
