@@ -124,7 +124,7 @@ public class BodyJointCoordinates
 
     // Change DIMENSION_TYPE integer to switch between alignment modes
     // '0': 2D only   '1': 3D Depth
-    private readonly int DIMENSION_TYPE = 1; 
+    private readonly int DIMENSION_TYPE = 0; 
     private float[] jointDepthValues = new float[25];
     private string coordinateDebugLog = "";
     public void Apply_BodyAlignmentOffset()
