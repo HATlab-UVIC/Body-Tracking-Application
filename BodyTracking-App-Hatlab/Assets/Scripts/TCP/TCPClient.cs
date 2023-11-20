@@ -139,10 +139,46 @@ public class TCPClient : MonoBehaviour
         catch (Exception e)
         {
             SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
-            UnityDebug.Log("Local TCP Client :: ERROR :: Error sending image to remote TCP server.\n" + e.Message);
+            UnityDebug.Log("Local TCP Client :: ERROR :: Error sending PV image to remote TCP server.\n" + e.Message);
             UnityDebug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
         }
 
+        _lastMessageSent = true;
+    }
+
+
+    public async void SendSpatialImageAsync(byte[] LRFImage, long ts_left, long ts_right)
+    {
+        if (!_lastMessageSent) return;
+        _lastMessageSent = false;
+        try
+        {
+            UnityDebug.Log("Local TCP Client :: SendSpatialImageAsync() :: Writing spatial camera data for TCP message.");
+            client_sending_image_bytes = true;
+
+            // Write header
+            _dataWriter.WriteString("f"); // header "f"
+
+            // Write Timestamp and Length
+            _dataWriter.WriteInt32(LRFImage.Length);
+            _dataWriter.WriteInt64(ts_left);
+            _dataWriter.WriteInt64(ts_right);
+
+            // Write actual data
+            _dataWriter.WriteBytes(LRFImage);
+
+            // Send out
+            await _dataWriter.StoreAsync();
+            await _dataWriter.FlushAsync();
+
+            client_sending_image_bytes = false;
+        }
+        catch (Exception e)
+        {
+            SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
+            UnityDebug.Log("Local TCP Client :: ERROR :: Error sending spatial image to remote TCP server.\n" + e.Message);
+            Debug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
+        }
         _lastMessageSent = true;
     }
 
