@@ -33,6 +33,10 @@ public class CameraImageFrameStream : MonoBehaviour
     public Image _depthImageTexture;
     HoloLensCameraStream.Resolution _resolution;
 
+    byte[] LRFImage;
+    long ts_unix_left;
+    long ts_unix_right;
+
     // External class object definitions
     VideoCapture _videoCapture;
     TCPClient tcp_client;
@@ -67,21 +71,27 @@ public class CameraImageFrameStream : MonoBehaviour
         try
         {
             researchMode = new HL2ResearchMode();
-            UnityDebug.Log("CameraImageFrameStream :: New instance of research mode created.\n" + researchMode);
+            UnityDebug.Log("CameraImageFrameStream :: New instance of research mode created.");
+
+            researchMode.InitializeSpatialCamerasFront();
+            researchMode.StartSpatialCamerasFrontLoop();
+
+            UnityDebug.Log("CameraImageFrameStream :: Research Mode Camera Extrinsics.\n\n" + researchMode.PrintLFExtrinsics() + "\n\n" + researchMode.PrintRFExtrinsics());
+
         } 
         catch (Exception e)
         {
             UnityDebug.Log("CameraImageFrameStream :: ERROR :: Error initializing research mode.\n" + e.Message);
         }
         
-        researchMode.InitializeLongDepthSensor();
 
+        /*researchMode.InitializeLongDepthSensor();
         researchMode.SetPointCloudDepthOffset(0);
-        researchMode.StartLongDepthSensorLoop(true);
+        researchMode.StartLongDepthSensorLoop(true);*/
 
 #if WINDOWS_UWP && XR_PLUGIN_OPENXR
         researchMode.SetReferenceCoordinateSystem(_spatialCoordinateSystem);
-        UnityDebug.Log("CameraImageFrameStream :: HL2ResearchMode Setup Completed.");
+        UnityDebug.Log("CameraImageFrameStream :: HL2ResearchMode Setup Completed.\n");
 #endif
 #endif
 
@@ -98,10 +108,6 @@ public class CameraImageFrameStream : MonoBehaviour
 #endif
 
         // initializing the coordinate system reference
-        //#if WINDOWS_UWP && XR_PLUGIN_WINDOWSMR
-        // not supported in newer version of unity
-        // _spatialCoordinateSystem_Ptr = UnityEngine.XR.WindowsMR.WindowsMREnvironment.OriginSpatialCoordinateSystem;
-
 #if WINDOWS_UWP && XR_PLUGIN_OPENXR
         _spatialCoordinateSystem = Microsoft.MixedReality.OpenXR.PerceptionInterop.GetSceneCoordinateSystem(UnityEngine.Pose.identity) as SpatialCoordinateSystem;
 
@@ -116,6 +122,14 @@ public class CameraImageFrameStream : MonoBehaviour
 #endif
         // starts the initialization process for the camera
         CameraStreamHelper.Instance.GetVideoCaptureAsync(OnVideoCaptureCreated);
+    }
+
+    public void ConnectToRemoteTCPServer()
+    {
+#if WINDOWS_UWP
+            UnityDebug.Log("CameraImageFrameStream :: Starting TCP Client Connection...");
+            tcp_client.start_tcp_client_connection();
+#endif
     }
 
 
@@ -135,7 +149,7 @@ public class CameraImageFrameStream : MonoBehaviour
 
         // send image frame over TCP to computer.
         // do this every frame if TCP is connected 
-        if (!_firstFrameCaptured) { SendSingleFrameAsync(); }
+        if (!_firstFrameCaptured) SendSingleFrameAsync();
     }
 
 
@@ -160,93 +174,6 @@ public class CameraImageFrameStream : MonoBehaviour
         }
     }
 
-    // TODO: looks like fixedupdate and savepointcloud are only being used in a debug context
-    /*private int counter = 0;
-    public void FixedUpdate()
-    {
-        if (counter % 40 == 0)
-        {
-            SavePointCloudPLY();
-        }
-        counter++;
-    }*/
-
-
-    /*public void SavePointCloudPLY()
-    {
-#if ENABLE_WINMD_SUPPORT
-        var longpointCloud = researchMode.GetLongThrowPointCloudBuffer();
-        var longpointMap = researchMode.GetLongDepthMapTextureBuffer();
-        // DebugText.LOG(longpointMap[5040].ToString() + ", " + longpointMap[4440].ToString()+ ", " + longpointMap[4740].ToString());
-#endif
-    }*/
-
-
-    private static float[] jointDepth_z = new float[25];
-    private static readonly int[] placement_offsets = {0,1,-1,320,-320};
-    public float[] Apply_DepthPositionFromSensor(Vector3[] jointCoordinateVectors)
-    {
-        if (jointCoordinateVectors == null)
-        {
-            UnityDebug.Log("CameraImageFrameStream :: ERROR :: Error with joint coordinates.");
-            return jointDepth_z;
-        }
-        UnityDebug.Log("CameraImageFrameStream :: Getting depth map texture buffer...");
-#if ENABLE_WINMD_SUPPORT
-
-        try
-        {
-            Byte[] depthMapTextureBuffer = researchMode.GetLongDepthMapTextureBuffer();
-
-            /*Texture2D depthMapImageTexture = new Texture2D(256, 256);
-
-            ImageConversion.LoadImage(depthMapImageTexture, depthMapTextureBuffer);
-
-            Vector2 pivot = new Vector2(0.5f, 0.5f);
-            Rect spriteRect = new Rect(0, 0, depthMapImageTexture.width, depthMapImageTexture.height);
-            _depthImageTexture.overrideSprite = Sprite.Create(depthMapImageTexture, spriteRect, pivot);
-
-            _depthImageRaw.texture = depthMapImageTexture;*/
-
-            // TODO: code above may be unnecessary (except for depthMapTextureBuffer)
-            // appears to only be used for displaying depth map, not needed for other purposes.
-
-            UnityDebug.Log("CameraImageFrameStream :: Calculating joint depth values...");
-            float x, y;
-            float depthValue;
-            int placement;
-            for (int i=0; i<jointCoordinateVectors.Length; i++)
-            {
-                x = jointCoordinateVectors[i].x + 30.0f;
-                y = jointCoordinateVectors[i].y + 10.0f;
-
-                // possibly calculating the index offset which correlates 2D image pixel data to depth buffer
-                placement = (int)(y * 320 + x);
-                depthValue = 0.0f;
-
-                // calculate the depth value
-                foreach (int offset in placement_offsets)
-                {
-                    depthValue += -float.Parse(depthMapTextureBuffer[placement + offset].ToString()) / 80;
-                }
-
-                depthValue /= placement_offsets.Length;
-                jointDepth_z[i] = depthValue + 9.0f;
-            }
-    
-            UnityDebug.Log("CameraImageFrameStream :: Depths calculated.");
-            return jointDepth_z;
-        }
-        catch (Exception e)
-        {
-            UnityDebug.Log("CameraImageFrameStream :: ERROR :: Error getting long depth map texture buffer.");
-            return jointDepth_z;
-        }
-        
-#endif
-        return jointDepth_z;
-    }
-
 
     // a local method reference for sending the image byte data over TCP
     public void SendSingleFrameAsync()
@@ -254,6 +181,7 @@ public class CameraImageFrameStream : MonoBehaviour
 #if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
                 //UnityDebug.Log("CameraImageFrameStream :: Sending Image Frame...");
             tcp_client.SendPVImageAsync(_latestImageBytes);
+            tcp_client.SendSpatialImageAsync(LRFImage, ts_unix_left, ts_unix_right);
 #endif
     }
 
@@ -346,6 +274,7 @@ public class CameraImageFrameStream : MonoBehaviour
 
                 //UnityDebug.Log("CameraImageFrameStream :: Frame Sample Acquired :: Saving frame image... \nImage bytes: " + _latestImageBytes.Length.ToString());
             sample.CopyRawImageDataIntoBuffer(_latestImageBytes);
+            
         }
         
 
@@ -388,5 +317,116 @@ public class CameraImageFrameStream : MonoBehaviour
     }
 
 
+    public void SaveSpatialImageEvent()
+    {
+        UnityDebug.Log("CameraImageframeStream :: Front Spatial Cameras :: Saving Left/Right front camera image buffers...");
+#if ENABLE_WINMD_SUPPORT
+#if WINDOWS_UWP
+        long ts_ft_left, ts_ft_right;
 
+        try
+        {
+            LRFImage = researchMode.GetLRFCameraBuffer(out ts_ft_left, out ts_ft_right);
+
+            UnityDebug.Log("CameraImageFrameStream :: Front Spatial Cameras :: Image buffer length\n\nBytes: "+ LRFImage.Length);
+
+            Windows.Perception.PerceptionTimestamp ts_left = Windows.Perception.PerceptionTimestampHelper.FromHistoricalTargetTime(DateTime.FromFileTime(ts_ft_left));
+            Windows.Perception.PerceptionTimestamp ts_right = Windows.Perception.PerceptionTimestampHelper.FromHistoricalTargetTime(DateTime.FromFileTime(ts_ft_right));
+
+            ts_unix_left = ts_left.TargetTime.ToUnixTimeMilliseconds();
+            ts_unix_right = ts_right.TargetTime.ToUnixTimeMilliseconds();
+        } catch (Exception e) { UnityDebug.Log("CameraImageFrameStream :: Error :: GetLRFCameraBuffer() issue with method"); }
+
+        
+#endif
+#endif
+        UnityDebug.Log("CameraImageframeStream :: Front Spatial Cameras :: Left/Right image buffer saved.");
+    }
 }
+
+
+// TODO: looks like fixedupdate and savepointcloud are only being used in a debug context
+/*private int counter = 0;
+public void FixedUpdate()
+{
+    if (counter % 40 == 0)
+    {
+        SavePointCloudPLY();
+    }
+    counter++;
+}*/
+
+/*public void SavePointCloudPLY()
+    {
+#if ENABLE_WINMD_SUPPORT
+        var longpointCloud = researchMode.GetLongThrowPointCloudBuffer();
+        var longpointMap = researchMode.GetLongDepthMapTextureBuffer();
+        // DebugText.LOG(longpointMap[5040].ToString() + ", " + longpointMap[4440].ToString()+ ", " + longpointMap[4740].ToString());
+#endif
+    }
+
+
+    private static float[] jointDepth_z = new float[25];
+    private static readonly int[] placement_offsets = {0,1,-1,320,-320};
+    public float[] Apply_DepthPositionFromSensor(Vector3[] jointCoordinateVectors)
+    {
+        if (jointCoordinateVectors == null)
+        {
+            UnityDebug.Log("CameraImageFrameStream :: ERROR :: Error with joint coordinates.");
+            return jointDepth_z;
+        }
+        UnityDebug.Log("CameraImageFrameStream :: Getting depth map texture buffer...");
+#if ENABLE_WINMD_SUPPORT
+
+        try
+        {
+            Byte[] depthMapTextureBuffer = researchMode.GetLongDepthMapTextureBuffer();
+
+            /*Texture2D depthMapImageTexture = new Texture2D(256, 256);
+
+            ImageConversion.LoadImage(depthMapImageTexture, depthMapTextureBuffer);
+
+            Vector2 pivot = new Vector2(0.5f, 0.5f);
+            Rect spriteRect = new Rect(0, 0, depthMapImageTexture.width, depthMapImageTexture.height);
+            _depthImageTexture.overrideSprite = Sprite.Create(depthMapImageTexture, spriteRect, pivot);
+
+            _depthImageRaw.texture = depthMapImageTexture;
+
+// TODO: code above may be unnecessary (except for depthMapTextureBuffer)
+// appears to only be used for displaying depth map, not needed for other purposes.
+
+UnityDebug.Log("CameraImageFrameStream :: Calculating joint depth values...");
+float x, y;
+float depthValue;
+int placement;
+for (int i = 0; i < jointCoordinateVectors.Length; i++)
+{
+    x = jointCoordinateVectors[i].x + 30.0f;
+    y = jointCoordinateVectors[i].y + 10.0f;
+
+    // possibly calculating the index offset which correlates 2D image pixel data to depth buffer
+    placement = (int)(y * 320 + x);
+    depthValue = 0.0f;
+
+    // calculate the depth value
+    foreach (int offset in placement_offsets)
+    {
+        depthValue += -float.Parse(depthMapTextureBuffer[placement + offset].ToString()) / 80;
+    }
+
+    depthValue /= placement_offsets.Length;
+    jointDepth_z[i] = depthValue + 9.0f;
+}
+
+UnityDebug.Log("CameraImageFrameStream :: Depths calculated.");
+return jointDepth_z;
+        }
+        catch (Exception e)
+        {
+    UnityDebug.Log("CameraImageFrameStream :: ERROR :: Error getting long depth map texture buffer.");
+    return jointDepth_z;
+}
+
+#endif
+return jointDepth_z;
+    }*/
