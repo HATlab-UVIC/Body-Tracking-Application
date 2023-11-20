@@ -14,7 +14,7 @@ public class BodyJointCoordinates
     private static BodyJointCoordinates _instance;
     private CameraImageFrameStream _frameStream;
     public Vector3[] _jointCoordinateVectors;
-    private Vector3 BodyAlignmentPosition;
+    public Vector3 BodyAlignmentPosition;
     public Vector3 _bodyAlignmentOffset;
 
     public bool _coordinateDataSet { get; set; } = false;
@@ -70,7 +70,7 @@ public class BodyJointCoordinates
             _vectorComponents = Regex.Split(_coordinateVectors[i], @"\s+");
 
             // store the x, y, z components as float values
-            for (int j = 0; j < 3; j++) xyz_component[j] = float.Parse(_vectorComponents[j]) / 80; // / 50; // note: uses 35 in old TCPServer class
+            for (int j = 0; j < 3; j++) xyz_component[j] = float.Parse(_vectorComponents[j]) / 85; // / 50; // note: uses 35 in old TCPServer class
 
             // save components as Vector3 and store to body joint coordinate vectors variable
             _pointVector = new Vector3(xyz_component[0], xyz_component[1], xyz_component[2]);
@@ -135,7 +135,7 @@ public class BodyJointCoordinates
         UnityDebug.Log($"BodyJointCoordinates :: Body Alignment Offset Vector: \n({_bodyAlignmentOffset.x:F3}, {_bodyAlignmentOffset.y:F3}, {_bodyAlignmentOffset.z:F3})");
 
         // calculate the depth values of the joint coordinates
-        if (DIMENSION_TYPE == 1) jointDepthValues = _frameStream.Apply_DepthPositionFromSensor(_jointCoordinateVectors);
+        //if (DIMENSION_TYPE == 1) jointDepthValues = _frameStream.Apply_DepthPositionFromSensor(_jointCoordinateVectors);
 
         _jointCoordinateVectors[0].x = BodyAlignmentPosition.x;
         _jointCoordinateVectors[0].y = - BodyAlignmentPosition.y;
