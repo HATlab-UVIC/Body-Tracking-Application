@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityDebug = UnityEngine.Debug;
 using bug = System.Diagnostics.Debug;
+using System.Collections.Generic;
 
 public class BodyPositionManager : MonoBehaviour
 { 
@@ -8,10 +9,14 @@ public class BodyPositionManager : MonoBehaviour
     BodyJointCoordinates _bodyJointCoordinates;
     public Transform BodyAlignmentPosition; // transform properties of BodyAlignmentPosition gameObject
 
+    public static Queue<Vector3[]> _bodyPositions;
+
     
     // initialize classes upon startup of the application
     public void Start()
     {
+        _bodyPositions = new Queue<Vector3[]>();
+
         UnityDebug.Log("BodyPositionManager :: Starting BPM Initialization...");
         // create the instance of BJC and initialize the joint coordinates to starting pose
         _bodyJointCoordinates = BodyJointCoordinates.Instance;
@@ -30,14 +35,14 @@ public class BodyPositionManager : MonoBehaviour
 
 
     // on execution of each frame, update the body position data
-    public void Update()
+    public void LateUpdate()
     {
         UnityDebug.Log("BodyPositionManager :: Bool States :: TCP Server ("+ TCPServer.tcp_server_connected.ToString()+") Joint Coordinates Set ("+ _bodyJointCoordinates._coordinateDataSet.ToString()+")");
         if (_bodyJointCoordinates._coordinateDataSet)
         {
             UnityDebug.Log("BodyPositionManager :: Loop :: Updating body components and aligning gameObjects...");
 
-            _limbComponents.UpdateBodyComponents(_bodyJointCoordinates._jointCoordinateVectors);
+            if (_bodyPositions.Count > 0) _limbComponents.UpdateBodyComponents(_bodyPositions.Dequeue()); //_bodyJointCoordinates._jointCoordinateVectors
             AlignLimbObjects(_limbComponents._limbs);
 
             UnityDebug.Log("BodyPositionManager :: Loop :: Update complete.");
@@ -62,5 +67,11 @@ public class BodyPositionManager : MonoBehaviour
         }
         UnityDebug.Log("BodyPositionManager :: end of applying coordinates to limb gameObjects.");
 
+    }
+
+
+    public static void AddPoseToQueue(Vector3[] jointCoordinateVectors)
+    {
+        _bodyPositions.Enqueue(jointCoordinateVectors);
     }
 }
