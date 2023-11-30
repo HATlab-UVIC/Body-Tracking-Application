@@ -25,7 +25,7 @@ public class BodyJointCoordinates
     private BodyJointCoordinates() 
     { 
         _jointCoordinateVectors = new Vector3[25]; 
-        _frameStream = new CameraImageFrameStream();
+        //_frameStream = new CameraImageFrameStream();
     }
 
     // singleton constructor. Used for defining only a single instance that can be referenced
@@ -54,7 +54,7 @@ public class BodyJointCoordinates
             //UnityDebug.Log("BodyJointCoordinates :: Getting coordinates from TCPStream...");
 
 
-        OP_Body_Coordinates = OP_Body_Coordinates.Substring(3, OP_Body_Coordinates.Length - 5);
+        OP_Body_Coordinates = OP_Body_Coordinates.Substring(3, OP_Body_Coordinates.Length - 6);
         OP_Body_Coordinates = OP_Body_Coordinates.Replace("\n  ", "");
 
         string[] _coordinateVectors = OP_Body_Coordinates.Split("][");
@@ -82,8 +82,11 @@ public class BodyJointCoordinates
         if (_initJointCoordinatesCompleted)
         {
             Apply_BodyAlignmentOffset();
+            BodyPositionManager.AddPoseToQueue(_jointCoordinateVectors);
             _coordinateDataSet = true;
         }
+
+        
 
             //UnityDebug.Log("BodyJointCoordinates :: End of Getting coordinates from TCPStream.");
 
@@ -117,7 +120,7 @@ public class BodyJointCoordinates
     private void CalculateBodyAlignmentOffset()
     {
         _bodyAlignmentOffset.x = _jointCoordinateVectors[0].x - BodyAlignmentPosition.x;
-        _bodyAlignmentOffset.y = _jointCoordinateVectors[0].y + BodyAlignmentPosition.y;
+        _bodyAlignmentOffset.y = _jointCoordinateVectors[0].y - BodyAlignmentPosition.y; //changed to - from +
         _bodyAlignmentOffset.z = _jointCoordinateVectors[0].z - BodyAlignmentPosition.z;
     }
 
