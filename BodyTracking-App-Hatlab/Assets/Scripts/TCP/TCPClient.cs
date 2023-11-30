@@ -19,39 +19,34 @@ public class TCPClient : MonoBehaviour
     public static bool tcp_client_connected { get; private set; } = false;
     public static bool client_sending_image_bytes { get; private set; } = false;
 
+#if WINDOWS_UWP
+    // defining necessary variables for data communication over TCP
+    StreamSocket _dataStreamSocket = null;
+    public DataWriter _dataWriter;
+    public DataReader _dataReader;
+#endif
+
 
     // when the application goes into the background (not being used)
     // stop the TCP client connection
     private static bool startup_check = true;
     public void OnApplicationFocus(bool appInUse)
     {
-        // auto connect/disconnect to TCP on app focus
-#if WINDOWS_UWP
         if (!appInUse) stop_tcp_client_connection();
         else if (appInUse && !tcp_client_connected) start_tcp_client_connection();
-#endif
     }
 
 
     public void OnApplicationQuit()
     {
-#if WINDOWS_UWP
         stop_tcp_client_connection();
-#endif
     }
-
-
-#if WINDOWS_UWP
-
-    // defining necessary variables for data communication over TCP
-    StreamSocket _dataStreamSocket = null;
-    public DataWriter _dataWriter;
-    public DataReader _dataReader;
 
 
     // initializes/starts the connection between the local client and remote server
     public async void start_tcp_client_connection()
     {
+#if WINDOWS_UWP
         if (_dataStreamSocket != null) _dataStreamSocket.Dispose();
 
         try
@@ -62,9 +57,9 @@ public class TCPClient : MonoBehaviour
             UnityDebug.Log("Remote Host IP :: (" + _hostName + ") Remote Connection Port :: (" + remote_connection_port + ")");
 
             // establish an asynchronous connection with a remote server
-                //UnityDebug.Log("Local TCP Client :: pre-ConnectAsync()");
+            //UnityDebug.Log("Local TCP Client :: pre-ConnectAsync()");
             await _dataStreamSocket.ConnectAsync(_hostName, remote_connection_port);
-                //UnityDebug.Log("Local TCP Client :: ConnectAsync() Completed");
+            //UnityDebug.Log("Local TCP Client :: ConnectAsync() Completed");
             
             // initializing the read and write objects for TCP
             _dataWriter = new DataWriter(_dataStreamSocket.OutputStream);
@@ -72,19 +67,34 @@ public class TCPClient : MonoBehaviour
 
             _dataReader.InputStreamOptions = InputStreamOptions.Partial;
             tcp_client_connected = true;
-                //UnityDebug.Log("Local TCP Client :: Connected to remote TCP Server.");
+            UnityDebug.Log("Local TCP Client :: Connected to remote TCP Server.");
         } 
         catch (Exception e)
         {
             SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
             UnityDebug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
         }
+#endif
     }
 
 
     // tears down the connection between the local client and remote server
-    private void stop_tcp_client_connection()
+    private async void stop_tcp_client_connection()
     {
+#if WINDOWS_UWP
+        try
+        {
+            _dataWriter.WriteString("e");  
+            await _dataWriter.StoreAsync();
+            await _dataWriter.FlushAsync();
+        }
+        catch (Exception e)
+        {
+            SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
+            UnityDebug.Log("Local TCP Client :: ERROR :: Error sending PV image to remote TCP server.\n" + e.Message);
+            UnityDebug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
+        }
+
         _dataWriter?.DetachStream();
         _dataWriter?.Dispose();
         _dataWriter = null;
@@ -96,6 +106,7 @@ public class TCPClient : MonoBehaviour
         _dataStreamSocket?.Dispose();
         tcp_client_connected = false;
         UnityDebug.Log("Local TCP Client :: Disconnected from TCP Server.");
+#endif
     }
 
 
@@ -104,6 +115,7 @@ public class TCPClient : MonoBehaviour
     bool _lastMessageSent = true;
     public async void SendPVImageAsync(byte[] image_data)
     {
+#if WINDOWS_UWP
         if (!_lastMessageSent) return;
         _lastMessageSent = false;
 
@@ -144,11 +156,13 @@ public class TCPClient : MonoBehaviour
         }
 
         _lastMessageSent = true;
+#endif
     }
 
 
     public async void SendSpatialImageAsync(byte[] LRFImage, long ts_left, long ts_right)
     {
+#if WINDOWS_UWP
         if (!_lastMessageSent) return;
         _lastMessageSent = false;
         try
@@ -160,6 +174,7 @@ public class TCPClient : MonoBehaviour
             _dataWriter.WriteString("f"); // header "f"
 
             // Write Timestamp and Length
+            UnityDebug.Log("Local TCP CLient :: SendSpatialImageAsync() :: LRI length: " + LRFImage.Length);
             _dataWriter.WriteInt32(LRFImage.Length);
             _dataWriter.WriteInt64(ts_left);
             _dataWriter.WriteInt64(ts_right);
@@ -180,7 +195,8 @@ public class TCPClient : MonoBehaviour
             Debug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
         }
         _lastMessageSent = true;
+#endif
     }
 
-#endif
+
 }
