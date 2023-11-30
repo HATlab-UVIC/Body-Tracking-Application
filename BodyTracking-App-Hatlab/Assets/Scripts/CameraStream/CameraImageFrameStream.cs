@@ -126,23 +126,21 @@ public class CameraImageFrameStream : MonoBehaviour
 
     public void ConnectToRemoteTCPServer()
     {
-#if WINDOWS_UWP
             UnityDebug.Log("CameraImageFrameStream :: Starting TCP Client Connection...");
             tcp_client.start_tcp_client_connection();
-#endif
     }
 
 
     public void Update()
     {
         // Handle the camera transform action updates stored in the queue
-        lock (_mainThreadActions)
+        /*lock (_mainThreadActions)
         {
             while (_mainThreadActions.Count > 0)
             {
                 _mainThreadActions.Dequeue().Invoke();
             }
-        }
+        }*/
 
             //UnityDebug.Log("CameraImageFrameStream :: Update Loop :: TCP Client (" + TCPClient.tcp_client_connected.ToString() + ") Video Mode (" + _videoModeStarted.ToString() + ")");
         if (!TCPClient.tcp_client_connected || !_videoModeStarted) return;
@@ -180,8 +178,8 @@ public class CameraImageFrameStream : MonoBehaviour
     {
 #if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
                 //UnityDebug.Log("CameraImageFrameStream :: Sending Image Frame...");
-            tcp_client.SendPVImageAsync(_latestImageBytes);
-            tcp_client.SendSpatialImageAsync(LRFImage, ts_unix_left, ts_unix_right);
+            //tcp_client.SendPVImageAsync(_latestImageBytes);
+            if (LRFImage != null) tcp_client.SendSpatialImageAsync(LRFImage, ts_unix_left, ts_unix_right);
 #endif
     }
 
@@ -250,14 +248,14 @@ public class CameraImageFrameStream : MonoBehaviour
     {
         // Limits the number of actions that can be added to the queue.
         // TODO: not sure if this is necessary to be done in a queue
-        lock (_mainThreadActions)
+        /*lock (_mainThreadActions)
         {
             if (_mainThreadActions.Count > 2)
             {
                 sample.Dispose();
                 return;
             }
-        }
+        }*/
 
         // Dont copy image data into buffer if TCP Client is trying to send data
         if (!TCPClient.client_sending_image_bytes)
@@ -273,8 +271,10 @@ public class CameraImageFrameStream : MonoBehaviour
             if (_firstFrameCaptured) _firstFrameCaptured = false;
 
                 //UnityDebug.Log("CameraImageFrameStream :: Frame Sample Acquired :: Saving frame image... \nImage bytes: " + _latestImageBytes.Length.ToString());
-            sample.CopyRawImageDataIntoBuffer(_latestImageBytes);
-            
+            //sample.CopyRawImageDataIntoBuffer(_latestImageBytes);
+            SaveSpatialImageEvent();
+
+
         }
         
 
@@ -293,7 +293,7 @@ public class CameraImageFrameStream : MonoBehaviour
         if (!sample.TryGetProjectionMatrix(out float[] projectionMatrix_float)) ; // return
         Matrix4x4 _projectionMatrix = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(projectionMatrix_float);
 
-        Enqueue(() =>
+        /*Enqueue(() =>
         {
 #if XR_PLUGIN_WINDOWSMR || XR_PLUGIN_OPENXR
             // Note: This is from the VideoPanelApp file. Not sure the end significance of this yet whether it is needed or not.
@@ -310,7 +310,7 @@ public class CameraImageFrameStream : MonoBehaviour
             unityCamera.transform.localPosition = localToWorldMatrix.GetColumn(3);
             unityCamera.transform.localRotation = Quaternion.LookRotation(localToWorldMatrix.GetColumn(2), localToWorldMatrix.GetColumn(1));
 #endif
-        });
+        });*/
 
         // memory management
         sample.Dispose();
