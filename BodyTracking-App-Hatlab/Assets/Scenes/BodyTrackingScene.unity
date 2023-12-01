@@ -3580,7 +3580,6 @@ GameObject:
   - component: {fileID: 1724669307}
   - component: {fileID: 1724669310}
   - component: {fileID: 1724669309}
-  - component: {fileID: 1724669311}
   - component: {fileID: 1724669312}
   m_Layer: 0
   m_Name: CameraImageFrameStream_Object
@@ -3630,20 +3629,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   remoteHost_IP_address: 169.254.75.186
   remote_connection_port: 9090
---- !u!114 &1724669311
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1724669306}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2e93338d1c265d14ba434f2276f72ed2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _depthImageRaw: {fileID: 1697014212}
-  _depthImageTexture: {fileID: 869763702}
 --- !u!114 &1724669312
 MonoBehaviour:
   m_ObjectHideFlags: 0
