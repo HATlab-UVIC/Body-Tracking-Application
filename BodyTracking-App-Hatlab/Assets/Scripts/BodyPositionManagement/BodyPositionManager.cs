@@ -37,17 +37,17 @@ public class BodyPositionManager : MonoBehaviour
     // on execution of each frame, update the body position data
     public void LateUpdate()
     {
-        UnityDebug.Log("BodyPositionManager :: Bool States :: TCP Server ("+ TCPServer.tcp_server_connected.ToString()+") Joint Coordinates Set ("+ _bodyJointCoordinates._coordinateDataSet.ToString()+")");
-        if (_bodyJointCoordinates._coordinateDataSet)
-        {
-            UnityDebug.Log("BodyPositionManager :: Loop :: Updating body components and aligning gameObjects...");
+        //UnityDebug.Log("BodyPositionManager :: Bool States :: TCP Server ("+ TCPServer.tcp_server_connected.ToString()+") Joint Coordinates Set ("+ _bodyJointCoordinates._coordinateDataSet.ToString()+")");
+        //if (_bodyJointCoordinates._coordinateDataSet)
+        //{
+        UnityDebug.Log("BodyPositionManager :: Loop :: Updating body components :: coorindate queue >> "+_bodyPositions.Count);
 
-            if (_bodyPositions.Count > 0) _limbComponents.UpdateBodyComponents(_bodyPositions.Dequeue()); //_bodyJointCoordinates._jointCoordinateVectors
-            AlignLimbObjects(_limbComponents._limbs);
+        if (_bodyPositions.Count > 0) _limbComponents.UpdateBodyComponents(_bodyPositions.Dequeue()); //_bodyJointCoordinates._jointCoordinateVectors
+        AlignLimbObjects(_limbComponents._limbs);
 
-            UnityDebug.Log("BodyPositionManager :: Loop :: Update complete.");
-            _bodyJointCoordinates._coordinateDataSet = false;
-        }
+        UnityDebug.Log("BodyPositionManager :: Loop :: Update complete.");
+        //_bodyJointCoordinates._coordinateDataSet = false;
+        //}
     }
 
 
