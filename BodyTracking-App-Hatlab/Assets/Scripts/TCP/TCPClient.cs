@@ -165,6 +165,7 @@ public class TCPClient : MonoBehaviour
 #if WINDOWS_UWP
         if (!_lastMessageSent) return;
         _lastMessageSent = false;
+        client_sending_image_bytes = true;
         try
         {
             UnityDebug.Log("Local TCP Client :: SendSpatialImageAsync() :: Writing spatial camera data for TCP message.");
@@ -195,6 +196,7 @@ public class TCPClient : MonoBehaviour
             Debug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
         }
         _lastMessageSent = true;
+        client_sending_image_bytes = false;
 #endif
     }
 
