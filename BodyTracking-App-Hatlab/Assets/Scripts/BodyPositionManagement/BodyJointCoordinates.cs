@@ -50,8 +50,8 @@ public class BodyJointCoordinates
 
         // still using joint data in BodyPositionManager.
         // Will return false when update is done
-        if (_coordinateDataSet) return;
-            //UnityDebug.Log("BodyJointCoordinates :: Getting coordinates from TCPStream...");
+        //if (_coordinateDataSet) return;
+        UnityDebug.Log("BodyJointCoordinates :: Getting coordinates from TCPStream...");
 
 
         OP_Body_Coordinates = OP_Body_Coordinates.Substring(3, OP_Body_Coordinates.Length - 6);
@@ -83,13 +83,10 @@ public class BodyJointCoordinates
         {
             Apply_BodyAlignmentOffset();
             BodyPositionManager.AddPoseToQueue(_jointCoordinateVectors);
-            _coordinateDataSet = true;
+            //_coordinateDataSet = true;
         }
 
-        
-
-            //UnityDebug.Log("BodyJointCoordinates :: End of Getting coordinates from TCPStream.");
-
+        UnityDebug.Log("BodyJointCoordinates :: End of Getting coordinates from TCPStream.");
     }
 
 
