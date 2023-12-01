@@ -84,9 +84,14 @@ public class TCPServer : MonoBehaviour
     }
 
 
+
+
     // connection is established with the TCP client on the computer. 
     // method is used to retrieve openpose data from the data stream
 #if !UNITY_EDITOR
+    string _checkByte_string, data_len_string, dataBuffer, BJC_data;
+    byte[] _checkByte, data_len_bytes, data_bytes;
+    uint data_len;
     private async void tcp_server_connection_established(StreamSocketListener sender, StreamSocketListenerConnectionReceivedEventArgs args)
     {   
         try
@@ -105,9 +110,9 @@ public class TCPServer : MonoBehaviour
                     _dataReader.ByteOrder = ByteOrder.BigEndian;
 
                     await _dataReader.LoadAsync(4);
-                    string _checkByte_string = _dataReader.ReadString(4);
+                    _checkByte_string = _dataReader.ReadString(4);
                     UnityDebug.Log("Local TCP Server :: Reading check byte string :: >> " + _checkByte_string);
-                    byte[] _checkByte = Convert.FromBase64String(_checkByte_string);
+                    _checkByte = Convert.FromBase64String(_checkByte_string);
 
                     if (_checkByte[0] != 0x01)
                     {
@@ -117,17 +122,17 @@ public class TCPServer : MonoBehaviour
                     UnityDebug.Log("Local TCP Server :: Valid check byte ( "+_checkByte[0].ToString()+" )");
 
                     await _dataReader.LoadAsync(8);
-                    string data_len_string = _dataReader.ReadString(8);
+                    data_len_string = _dataReader.ReadString(8);
                     UnityDebug.Log("Local TCP Server :: Reading Length string :: >> " + data_len_string);
-                    byte[] data_len_bytes = Convert.FromBase64String(data_len_string);
+                    data_len_bytes = Convert.FromBase64String(data_len_string);
                     if (BitConverter.IsLittleEndian) Array.Reverse(data_len_bytes);
-                    uint data_len = BitConverter.ToUInt32(data_len_bytes, 0);
+                    data_len = BitConverter.ToUInt32(data_len_bytes, 0);
                     UnityDebug.Log("Local TCP Server :: Data Length :: Number of data bytes ( " +data_len+ " )");
 
                     await _dataReader.LoadAsync(data_len);
-                    string dataBuffer = _dataReader.ReadString(data_len);
-                    byte[] data_bytes = Convert.FromBase64String(dataBuffer);
-                    string BJC_data = Encoding.UTF8.GetString(data_bytes);
+                    dataBuffer = _dataReader.ReadString(data_len);
+                    data_bytes = Convert.FromBase64String(dataBuffer);
+                    BJC_data = Encoding.UTF8.GetString(data_bytes);
                     UnityDebug.Log("Local TCP Server :: Coordinate Data :: coordinates >> \n" + BJC_data);
 
                     _dataReader.Dispose();
@@ -140,14 +145,13 @@ public class TCPServer : MonoBehaviour
         catch (Exception e) 
         {
             tcp_server_connected = false;
-            //cts.Dispose();
             UnityDebug.Log("Local TCP Server :: ERROR :: TCP Server socket connection closed. (ERROR)\n" + e.Message);
         }
     }
 
 #endif
 
-            static string AddBase64Padding(string base64Data)
+    static string AddBase64Padding(string base64Data)
     {
         int remainder = base64Data.Length % 4;
         if (remainder != 0)
