@@ -1,37 +1,37 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BodyAlignmentUpdater : MonoBehaviour
 {
-    BodyJointCoordinates _bodyJointCoordinates;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        _bodyJointCoordinates = BodyJointCoordinates.Instance;
-    }
-
-
     public void MoveBodyAlignment(int direction)
     {
+        Vector3 _alignment = TCPStreamCoordinateHandler.BodyAlignment_Position;
         switch (direction)
         {
-            case 0:
-                _bodyJointCoordinates.BodyAlignmentPosition.x += 0.2f;
+            case 0: //Right
+                _alignment.x += 0.1f;
                 break;
 
-            case 1:
-                _bodyJointCoordinates.BodyAlignmentPosition.x -= 0.2f;
+            case 1: //Left
+                _alignment.x -= 0.1f;
                 break;
 
-            case 2:
-                _bodyJointCoordinates.BodyAlignmentPosition.y += 0.2f;
+            case 2: //Down
+                _alignment.y += 0.1f;
                 break;
 
-            case 3:
-                _bodyJointCoordinates.BodyAlignmentPosition.y -= 0.2f;
+            case 3: //Up
+                _alignment.y -= 0.1f;
+                break;
+
+            case 4: //In
+                _alignment.z += 0.1f;
+                break;
+
+            case 5: //Out
+                _alignment.z -= 0.1f;
                 break;
         }
+
+        TCPStreamCoordinateHandler.BodyAlignment_Position = _alignment;
     }
 }
