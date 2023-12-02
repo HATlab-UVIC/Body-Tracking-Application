@@ -20,7 +20,6 @@ using UnityEngine.Windows;
 public class StereoCameraStream : MonoBehaviour
 {
     TCPClient tcp_client;
-    TCPServer tcp_server;
 
 #if WINDOWS_UWP && XR_PLUGIN_OPENXR
     SpatialCoordinateSystem _spatialCoordinateSystem;
@@ -33,7 +32,7 @@ public class StereoCameraStream : MonoBehaviour
     private Queue<byte[]> SpatialImageFrames;
     void Start()
     {
-        UnityDebug.Log("StereoCameraStream :: Starting Camera Stream...");
+        //UnityDebug.Log("StereoCameraStream :: Starting Camera Stream...");
 
         try
         {
@@ -47,14 +46,13 @@ public class StereoCameraStream : MonoBehaviour
             researchMode.SetReferenceCoordinateSystem(_spatialCoordinateSystem);
 #endif
 #endif
-            UnityDebug.Log("StereoCameraStream :: HL2ResearchMode Plugin Initialized.");
+            //UnityDebug.Log("StereoCameraStream :: HL2ResearchMode Plugin Initialized.");
         }
         catch (Exception e) { UnityDebug.Log("StereoCameraStream :: ERROR :: Error initializing HL2ResearchMode Plugin.\n"+e); }
 
         tcp_client = gameObject.GetComponent<TCPClient>();
-        tcp_server = gameObject.GetComponent<TCPServer>();
 
-        UnityDebug.Log("StereoCameraStream :: Starting TCP Client Connection...");
+        //UnityDebug.Log("StereoCameraStream :: Starting TCP Client Connection...");
         tcp_client.start_tcp_client_connection();
 
 #if WINDOWS_UWP && XR_PLUGIN_OPENXR
@@ -66,29 +64,30 @@ public class StereoCameraStream : MonoBehaviour
     }
 
 
-    int garbage_count = 1;
+
+#if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
     byte[] sendBytes = null;
     byte[] LRFImage = null;
     long ts_unix_left = 0;
     long ts_unix_right = 0;
+#endif
+    int garbage_count = 1;
     void Update()
     {
-        if (garbage_count % 60 == 0)
-        {
-            garbage_count++;
-            GC.Collect();
-        }
+        if (garbage_count % 120 == 0) GC.Collect();
+        garbage_count++;
+
 #if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
         SaveSpatialImageEvent();
         if (SpatialImageFrames.Count < 3) SpatialImageFrames.Enqueue(LRFImage);
 
         if (!TCPClient.tcp_client_connected || TCPClient.client_sending_image_bytes) return;
-        UnityDebug.Log("StereoCameraStream :: Update :: TCP image queue >> " + SpatialImageFrames.Count);
+        //UnityDebug.Log("StereoCameraStream :: Update :: TCP image queue >> " + SpatialImageFrames.Count);
         if (SpatialImageFrames.Count > 0)
         {
             sendBytes = SpatialImageFrames.Dequeue();
             if (sendBytes.Length > 0) tcp_client.SendSpatialImageAsync(sendBytes, ts_unix_left, ts_unix_right);
-            UnityDebug.Log("StereoCameraStream :: Update :: Image data sent.");
+            //UnityDebug.Log("StereoCameraStream :: Update :: Image data sent.");
         }
 
         LRFImage = null;
@@ -101,7 +100,7 @@ public class StereoCameraStream : MonoBehaviour
 
     public void ConnectToRemoteServer()
     {
-        UnityDebug.Log("StereoCameraStream :: Starting TCP Client Connection...");
+        //UnityDebug.Log("StereoCameraStream :: Starting TCP Client Connection...");
         tcp_client.start_tcp_client_connection();
     }
 
@@ -115,14 +114,13 @@ public class StereoCameraStream : MonoBehaviour
 #if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
     public void SaveSpatialImageEvent()
     {
-        UnityDebug.Log("StereoCameraStream :: Front Spatial Cameras :: Saving Left/Right front camera image buffers...");
+        //UnityDebug.Log("StereoCameraStream :: Front Spatial Cameras :: Saving Left/Right front camera image buffers...");
 
         long ts_ft_left = 0;
         long ts_ft_right = 0;
 
         try 
         { 
-            //LRFImage = researchMode.GetLRFCameraBuffer(out ts_ft_left, out ts_ft_right); // MEMORY LEAK ISSUE
             byte[] leftImage = researchMode.GetLFCameraBuffer(out ts_ft_left);
             byte[] rightImage = researchMode.GetRFCameraBuffer(out ts_ft_right);
             LRFImage = new byte[leftImage.Length + rightImage.Length];
@@ -144,7 +142,7 @@ public class StereoCameraStream : MonoBehaviour
             ts_unix_right = 0;
         }
 
-        UnityDebug.Log("StereoCameraStream :: Front Spatial Cameras :: Left/Right image buffer saved.");
+        //UnityDebug.Log("StereoCameraStream :: Front Spatial Cameras :: Left/Right image buffer saved.");
     }
 #endif
 }
