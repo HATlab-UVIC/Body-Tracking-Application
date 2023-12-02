@@ -52,7 +52,7 @@ public class PoseManager : MonoBehaviour
 
     public void CapturePose()
     {
-        UpdatePoseComponents(_limbComponents._limbs);
+        UpdatePoseComponents(_limbComponents.Patient_Limbs);
         AlignPoseObjects(_poseLimbs);
 
         if (!gameObject.activeSelf) gameObject.SetActive(true);
