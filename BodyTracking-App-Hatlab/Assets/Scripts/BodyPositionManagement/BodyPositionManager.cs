@@ -1,59 +1,61 @@
 using UnityEngine;
 using UnityDebug = UnityEngine.Debug;
-using bug = System.Diagnostics.Debug;
 using System.Collections.Generic;
 
 public class BodyPositionManager : MonoBehaviour
 { 
     LimbComponents _limbComponents;
-    BodyJointCoordinates _bodyJointCoordinates;
-    public Transform BodyAlignmentPosition; // transform properties of BodyAlignmentPosition gameObject
+    public Transform BodyAlignmentPosition_Object; // transform properties of BodyAlignment_Position gameObject
+    public GameObject HoloLens_object;
+    public static Vector3 HoloLens_Transform_position;
 
     public static Queue<Vector3[]> _bodyPositions;
 
     
-    // initialize classes upon startup of the application
     public void Start()
     {
         _bodyPositions = new Queue<Vector3[]>();
+        HoloLens_Transform_position = HoloLens_object.transform.position;
 
-        UnityDebug.Log("BodyPositionManager :: Starting BPM Initialization...");
-        // create the instance of BJC and initialize the joint coordinates to starting pose
-        _bodyJointCoordinates = BodyJointCoordinates.Instance;
-        _bodyJointCoordinates.InitJointCoordinates(BodyAlignmentPosition);
-
-        // create the instance of LC and initialize the limb struct array components
-        // storing the starting pose joint coordinates to the limb components
+        //UnityDebug.Log("BodyPositionManager :: Starting BPM Initialization...");
+        bool limb_setup_status = false;
         _limbComponents = LimbComponents.Instance;
-        _limbComponents.InitLimbs(gameObject, _bodyJointCoordinates._jointCoordinateVectors);
+        while (!limb_setup_status)
+        {
+            // create the instance of BJC and initialize the joint coordinates to starting pose
+            TCPStreamCoordinateHandler.InitJointCoordinates(BodyAlignmentPosition_Object);
 
-        
-        AlignLimbObjects(_limbComponents._limbs);
-        UnityDebug.Log("BodyPositionManager :: Ending BPM Initialization.");
+            // storing the starting pose joint coordinates to the limb components
+            if (_bodyPositions.Count > 0) limb_setup_status = _limbComponents.InitLimbs(gameObject, _bodyPositions.Dequeue());
+        }
 
+        AlignLimbObjects(_limbComponents.Patient_Limbs);
+        //UnityDebug.Log("BodyPositionManager :: Ending BPM Initialization.");
     }
 
 
-    // on execution of each frame, update the body position data
+    public void Update()
+    {
+        HoloLens_Transform_position = HoloLens_object.transform.position;
+        TCPStreamCoordinateHandler.SCALE_FACTOR_OFFSET = HoloLens_Transform_position.z;
+    }
+
+
     public void LateUpdate()
     {
         //UnityDebug.Log("BodyPositionManager :: Bool States :: TCP Server ("+ TCPServer.tcp_server_connected.ToString()+") Joint Coordinates Set ("+ _bodyJointCoordinates._coordinateDataSet.ToString()+")");
-        //if (_bodyJointCoordinates._coordinateDataSet)
-        //{
-        UnityDebug.Log("BodyPositionManager :: Loop :: Updating body components :: coorindate queue >> "+_bodyPositions.Count);
+        //UnityDebug.Log("BodyPositionManager :: Loop :: Updating body components :: coorindate queue >> "+_bodyPositions.Count);
 
         if (_bodyPositions.Count > 0) _limbComponents.UpdateBodyComponents(_bodyPositions.Dequeue()); //_bodyJointCoordinates._jointCoordinateVectors
-        AlignLimbObjects(_limbComponents._limbs);
+        AlignLimbObjects(_limbComponents.Patient_Limbs);
 
-        UnityDebug.Log("BodyPositionManager :: Loop :: Update complete.");
-        //_bodyJointCoordinates._coordinateDataSet = false;
-        //}
+        //UnityDebug.Log("BodyPositionManager :: Loop :: Update complete.");
     }
 
 
     public void AlignLimbObjects(LimbStruct[] limbs)
     {
-        UnityDebug.Log("BodyPositionManager :: applying coordinates to limb gameObjects...");
+        //UnityDebug.Log("BodyPositionManager :: applying coordinates to limb gameObjects...");
 
         for (int i=0; i < limbs.Length; i++)
         {
@@ -65,7 +67,7 @@ public class BodyPositionManager : MonoBehaviour
             float zScale = Vector3.Distance(limbs[i].limbOrigin, limbs[i].limbEnd);
             limbs[i].obj.transform.localScale = new Vector3(LimbComponents.DEFAULT_LIMB_SIZE, LimbComponents.DEFAULT_LIMB_SIZE, zScale);
         }
-        UnityDebug.Log("BodyPositionManager :: end of applying coordinates to limb gameObjects.");
+        //UnityDebug.Log("BodyPositionManager :: end of applying coordinates to limb gameObjects.");
 
     }
 
