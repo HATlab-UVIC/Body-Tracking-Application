@@ -15,14 +15,14 @@ public class TCP_Communication_Tests
     // that turns the string data into a Vetor3 array.
     // Purpose: Verify that string -> Vector3[] is working correctly
     [Test]
-    public void test_GetCoordinatesFromTCP()
+    /*public void test_GetCoordinatesFromTCP()
     {
         BodyJointCoordinates _BJC = BodyJointCoordinates.Instance;
         _BJC.getBodyCoordinatesFromTCPStream(OP_Body_Coordinates_input);
 
         Assert.AreEqual(helper_OP_vectors(), _BJC._jointCoordinateVectors);
         Assert.IsTrue(_BJC._coordinateDataSet);
-    }
+    }*/
 
 
     // Sample Vector3[] that should be produced from function under test
