@@ -9,7 +9,6 @@ public class LimbComponents
 {
     private static LimbComponents _instance;
     public LimbStruct[] Patient_Limbs;
-    public static readonly float DEFAULT_LIMB_SIZE = 0.1f;
 
     /*
     Summary:
@@ -82,7 +81,23 @@ public class LimbComponents
         return true;
     }
 
+    /*
+    Summary:
+    Method is used to access the game objects associated to each limb and update their transform
+    properties with that of the updated joint coordinates stored into the limb struct element.
+    
+    game object properties set:
+    - sets object transform position to center point of limb 
+    - sets the object orientation along limbOrigin -> limbEnd vector
+    - sets the object length to be the distance between the origin and end coordinates
 
+    Parameters:
+    LimbStruct[] >> The array of limb objects that contains the coordinate data for each joint
+
+    Return:
+    bool >> Returns the success status of the method
+    */
+    public static readonly float DEFAULT_LIMB_SIZE = 0.1f;
     public static bool AlignLimbObjects(LimbStruct[] limbs)
     {
         try
@@ -101,6 +116,8 @@ public class LimbComponents
     }
 }
 
+// ------------------------------------------------------------------------------
+//                              Helper Struct/Class
 // ------------------------------------------------------------------------------
 
 /*
