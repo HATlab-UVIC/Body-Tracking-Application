@@ -1,7 +1,9 @@
 using UnityEngine;
+using System;
 
 /*
 Summary:
+Class is used to store the relevant limb data used for updating the patient model game object
 */
 public class LimbComponents
 {
@@ -78,6 +80,24 @@ public class LimbComponents
         UpdateBodyComponents(Joint_Vectors);
 
         return true;
+    }
+
+
+    public static bool AlignLimbObjects(LimbStruct[] limbs)
+    {
+        try
+        {
+            for (int i = 0; i < limbs.Length; i++)
+            {
+                limbs[i].obj.transform.SetPositionAndRotation(Vector3.Lerp(limbs[i].limbOrigin, limbs[i].limbEnd, 0.5f),
+                                                          Quaternion.LookRotation(limbs[i].limbEnd - limbs[i].limbOrigin));
+
+                float zScale = Vector3.Distance(limbs[i].limbOrigin, limbs[i].limbEnd);
+                limbs[i].obj.transform.localScale = new Vector3(LimbComponents.DEFAULT_LIMB_SIZE, LimbComponents.DEFAULT_LIMB_SIZE, zScale);
+            }
+            return true;
+        }
+        catch { return false; }
     }
 }
 

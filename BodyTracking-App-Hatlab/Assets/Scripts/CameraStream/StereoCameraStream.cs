@@ -17,6 +17,12 @@ using HL2UnityPlugin;
 using UnityEngine.Windows;
 #endif
 
+/*
+Summary:
+Class is used to access and capture image frames acquired from the front left and right 
+spatial cameras. The image frames are then sent over TCP to a computer to be processed
+by openpose.
+*/
 public class StereoCameraStream : MonoBehaviour
 {
     TCPClient tcp_client;
@@ -30,14 +36,17 @@ public class StereoCameraStream : MonoBehaviour
 #endif
 
     private Queue<byte[]> SpatialImageFrames;
+
+    /*
+    Summary: 
+    Initialize the components required for image capture and transmission.
+    */
     void Start()
     {
-        //UnityDebug.Log("StereoCameraStream :: Starting Camera Stream...");
-
         try
         {
+            // init the HL2ResearchMode plugin for front spatial camera access
 #if ENABLE_WINMD_SUPPORT
-            UnityDebug.Log("StereoCameraStream :: Initializing HL2ResearchMode Plugin...");
             researchMode = new HL2ResearchMode();
 
             researchMode.InitializeSpatialCamerasFront();
@@ -46,25 +55,26 @@ public class StereoCameraStream : MonoBehaviour
             researchMode.SetReferenceCoordinateSystem(_spatialCoordinateSystem);
 #endif
 #endif
-            //UnityDebug.Log("StereoCameraStream :: HL2ResearchMode Plugin Initialized.");
         }
         catch (Exception e) { UnityDebug.Log("StereoCameraStream :: ERROR :: Error initializing HL2ResearchMode Plugin.\n"+e); }
 
+        // init the TCP Client for data transmission
         tcp_client = gameObject.GetComponent<TCPClient>();
-
-        //UnityDebug.Log("StereoCameraStream :: Starting TCP Client Connection...");
         tcp_client.start_tcp_client_connection();
 
 #if WINDOWS_UWP && XR_PLUGIN_OPENXR
         _spatialCoordinateSystem = Microsoft.MixedReality.OpenXR.PerceptionInterop.GetSceneCoordinateSystem(UnityEngine.Pose.identity) as SpatialCoordinateSystem;
 #endif
-
+        // init frame sending queue
         SpatialImageFrames = new Queue<byte[]>();
 
     }
 
 
-
+    /*
+    Summary: 
+    Update is used for capturing spatial image frames and sending the image data over TCP.
+    */
 #if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
     byte[] sendBytes = null;
     byte[] LRFImage = null;
@@ -79,15 +89,15 @@ public class StereoCameraStream : MonoBehaviour
 
 #if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
         SaveSpatialImageEvent();
-        if (SpatialImageFrames.Count < 3) SpatialImageFrames.Enqueue(LRFImage);
+        if (SpatialImageFrames.Count < 2) SpatialImageFrames.Enqueue(LRFImage);
 
         if (!TCPClient.tcp_client_connected || TCPClient.client_sending_image_bytes) return;
-        //UnityDebug.Log("StereoCameraStream :: Update :: TCP image queue >> " + SpatialImageFrames.Count);
+        
+        // check that there are images to be sent
         if (SpatialImageFrames.Count > 0)
         {
             sendBytes = SpatialImageFrames.Dequeue();
             if (sendBytes.Length > 0) tcp_client.SendSpatialImageAsync(sendBytes, ts_unix_left, ts_unix_right);
-            //UnityDebug.Log("StereoCameraStream :: Update :: Image data sent.");
         }
 
         LRFImage = null;
@@ -98,33 +108,37 @@ public class StereoCameraStream : MonoBehaviour
     }
 
 
+    /*
+    Summary: 
+    The handler method for the voice command 'connect server' to reconnect to the
+    remote TCP Server if it closes or disconnects.
+    */
     public void ConnectToRemoteServer()
     {
-        //UnityDebug.Log("StereoCameraStream :: Starting TCP Client Connection...");
         tcp_client.start_tcp_client_connection();
     }
 
 
-    public void SendCameraFrameAsync(byte[] Image, long ts_left, long ts_right)
-    {
-        tcp_client.SendSpatialImageAsync(Image, ts_left, ts_right);
-    }
-
-
+    /*
+    Summary: 
+    Method is used to save image frames from the front left and right spatial cameras
+    on the HoloLens device.
+    */
 #if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
     public void SaveSpatialImageEvent()
     {
-        //UnityDebug.Log("StereoCameraStream :: Front Spatial Cameras :: Saving Left/Right front camera image buffers...");
-
         long ts_ft_left = 0;
         long ts_ft_right = 0;
 
         try 
         { 
+            // get the front left camera image buffer
             byte[] leftImage = researchMode.GetLFCameraBuffer(out ts_ft_left);
+            // get the fri=ont right camera image buffer
             byte[] rightImage = researchMode.GetRFCameraBuffer(out ts_ft_right);
+            
+            // combine the images into a single buffer for transmission over TCP
             LRFImage = new byte[leftImage.Length + rightImage.Length];
-
             Array.Copy(leftImage, 0, LRFImage, 0, leftImage.Length);
             Array.Copy(rightImage, 0, LRFImage, leftImage.Length, rightImage.Length);
             
@@ -136,13 +150,10 @@ public class StereoCameraStream : MonoBehaviour
         } 
         catch (Exception e) 
         { 
-            UnityDebug.Log("StereoCameraStream :: Error :: GetLRFCameraBuffer() issue with method\n" + e); 
             LRFImage = new byte[0];
             ts_unix_left = 0;
             ts_unix_right = 0;
         }
-
-        //UnityDebug.Log("StereoCameraStream :: Front Spatial Cameras :: Left/Right image buffer saved.");
     }
 #endif
 }

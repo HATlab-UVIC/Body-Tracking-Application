@@ -1,4 +1,5 @@
 using System;
+using System.Net.Sockets;
 //using System.Net.Sockets;
 using UnityEngine;
 using UnityDebug = UnityEngine.Debug;
@@ -8,42 +9,55 @@ using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
 #endif
 
-// Use for the transmission of data from the HoloLens to the computer
+/*
+Summary: 
+TCP Client, once connected to the remote TCP Server, is used to transmit the images
+captured on the HoloLens to a computer for processing.
+*/
 public class TCPClient : MonoBehaviour
 {
-    // data fields in Unity editor
-    [SerializeField]
+    [SerializeField] // data fields in Unity editor
     string remoteHost_IP_address, remote_connection_port;
 
-    // TCP connection status variable
     public static bool tcp_client_connected { get; private set; } = false;
     public static bool client_sending_image_bytes { get; private set; } = false;
 
 #if WINDOWS_UWP
-    // defining necessary variables for data communication over TCP
+    // objects for data communication over TCP
     StreamSocket _dataStreamSocket = null;
     public DataWriter _dataWriter;
-    public DataReader _dataReader;
+    bool _lastMessageSent = true;
 #endif
 
 
-    // when the application goes into the background (not being used)
-    // stop the TCP client connection
-    private static bool startup_check = true;
+    /*
+    Summary:
+    When the application state is opened and closed while running, the TCP
+    connection is either restarted or stopped.
+    */
     public void OnApplicationFocus(bool appInUse)
     {
-        if (!appInUse) stop_tcp_client_connection();
+        if (!appInUse) stop_tcp_client_connection(0);
         else if (appInUse && !tcp_client_connected) start_tcp_client_connection();
     }
 
 
+    /*
+    Summary:
+    On final close of the application, send shutdown message to remote TCP Server
+    to stop execution of back-end.
+    */
     public void OnApplicationQuit()
     {
-        stop_tcp_client_connection();
+        stop_tcp_client_connection(1);
     }
 
 
-    // initializes/starts the connection between the local client and remote server
+    /*
+    Summary:
+    Performs the setup tasks to establish a connection between the local TCP Client
+    and the remote TCP Server on a computer.
+    */
     public async void start_tcp_client_connection()
     {
 #if WINDOWS_UWP
@@ -51,23 +65,16 @@ public class TCPClient : MonoBehaviour
 
         try
         {
-            UnityDebug.Log("Local TCP Client :: Attempting to connect to remote TCP Server...");
             _dataStreamSocket = new StreamSocket();
             var _hostName = new Windows.Networking.HostName(remoteHost_IP_address);
-            UnityDebug.Log("Remote Host IP :: (" + _hostName + ") Remote Connection Port :: (" + remote_connection_port + ")");
 
-            // establish an asynchronous connection with a remote server
-            //UnityDebug.Log("Local TCP Client :: pre-ConnectAsync()");
+            // establish a connection with the remote server
             await _dataStreamSocket.ConnectAsync(_hostName, remote_connection_port);
-            //UnityDebug.Log("Local TCP Client :: ConnectAsync() Completed");
             
-            // initializing the read and write objects for TCP
+            // initializing the TCP Client data writer
             _dataWriter = new DataWriter(_dataStreamSocket.OutputStream);
-            _dataReader = new DataReader(_dataStreamSocket.InputStream);
 
-            _dataReader.InputStreamOptions = InputStreamOptions.Partial;
             tcp_client_connected = true;
-            UnityDebug.Log("Local TCP Client :: Connected to remote TCP Server.");
         } 
         catch (Exception e)
         {
@@ -78,41 +85,52 @@ public class TCPClient : MonoBehaviour
     }
 
 
-    // tears down the connection between the local client and remote server
-    private async void stop_tcp_client_connection()
+    /*
+    Summary:
+    Tear down the connection to the remote TCP Server. If the app is being shut down,
+    send a shutdown message to stop the operation of the remote TCP Server.
+    */
+    private async void stop_tcp_client_connection(int closed_state)
     {
 #if WINDOWS_UWP
-        try
+        if (closed_state == 1)
         {
-            _dataWriter.WriteString("e");  
-            await _dataWriter.StoreAsync();
-            await _dataWriter.FlushAsync();
-        }
-        catch (Exception e)
-        {
-            SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
-            UnityDebug.Log("Local TCP Client :: ERROR :: Error sending PV image to remote TCP server.\n" + e.Message);
-            UnityDebug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
+            try
+            {
+                // send stop operation message to TCP Server
+                _dataWriter.WriteString("e");
+                await _dataWriter.StoreAsync();
+                await _dataWriter.FlushAsync();
+            }
+            catch (Exception e)
+            {
+                SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
+                UnityDebug.Log("Local TCP Client :: ERROR :: Error sending PV image to remote TCP server.\n" + e.Message);
+                UnityDebug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
+            }
         }
 
+        // close TCP Server connection
         _dataWriter?.DetachStream();
         _dataWriter?.Dispose();
         _dataWriter = null;
 
-        _dataReader?.DetachStream();
-        _dataReader.Dispose();
-        _dataReader = null;
-
         _dataStreamSocket?.Dispose();
         tcp_client_connected = false;
-        UnityDebug.Log("Local TCP Client :: Disconnected from TCP Server.");
 #endif
     }
 
 
-    // async process for sending image from HoloLens to computer over TCP.
-    // PV -> photo-video | LRF -> laser range finder ?? maybe
-    bool _lastMessageSent = true;
+    /*
+    Summary:
+    Async method for sending the image byte data for images from the front
+    Photo/Video camera on the HoloLens. Image bytes are sent via the local
+    TCP Client and received by the remote TCP Server. (PV = Photo/Video)
+
+    Parameters:
+    byte[] >> The array of image bytes that define the captured image frame
+    */
+    
     public async void SendPVImageAsync(byte[] image_data)
     {
 #if WINDOWS_UWP
@@ -121,7 +139,6 @@ public class TCPClient : MonoBehaviour
 
         try
         {
-            UnityDebug.Log("Local TCP Client :: SendPHImageAsync() :: Writing data for TCP message.");
             client_sending_image_bytes = true;
 
             // writes the header "v" to stream to specify type of data being passed.
@@ -139,14 +156,9 @@ public class TCPClient : MonoBehaviour
             //                              represent the image)
             _dataWriter.WriteBytes(image_data);
 
-                //UnityDebug.Log("Local TCP Client :: SendPHImageAsync() :: TCP message data...\n" + "Header: v\n" + "Data Length: " + image_data.Length);
-
             // send image data over TCP
             await _dataWriter.StoreAsync();
-            await _dataWriter.FlushAsync();
-
-            client_sending_image_bytes = false;
-                //UnityDebug.Log("Local TCP Client :: Image Data Sent.");
+            await _dataWriter.FlushAsync();   
         }
         catch (Exception e)
         {
@@ -154,12 +166,23 @@ public class TCPClient : MonoBehaviour
             UnityDebug.Log("Local TCP Client :: ERROR :: Error sending PV image to remote TCP server.\n" + e.Message);
             UnityDebug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
         }
-
+        client_sending_image_bytes = false;
         _lastMessageSent = true;
 #endif
     }
 
 
+    /*
+    Summary:
+    Async method for sending the image byte data for images from the front
+    left and right spatial cameras on the HoloLens. Image bytes are sent 
+    via the local TCP Client and received by the remote TCP Server.
+
+    Parameters:
+    byte[] >> The array of combined image bytes that define the captured image frames
+    long >> The timestamp of the left image
+    long >> The timestamp of the right image
+    */
     public async void SendSpatialImageAsync(byte[] LRFImage, long ts_left, long ts_right)
     {
 #if WINDOWS_UWP
@@ -168,26 +191,22 @@ public class TCPClient : MonoBehaviour
         client_sending_image_bytes = true;
         try
         {
-            UnityDebug.Log("Local TCP Client :: SendSpatialImageAsync() :: Writing spatial camera data for TCP message.");
-            client_sending_image_bytes = true;
-
-            // Write header
-            _dataWriter.WriteString("f"); // header "f"
+            // Write single byte header (1 byte)
+            _dataWriter.WriteString("f");
 
             // Write Timestamp and Length
             UnityDebug.Log("Local TCP CLient :: SendSpatialImageAsync() :: LRI length: " + LRFImage.Length);
-            _dataWriter.WriteInt32(LRFImage.Length);
-            _dataWriter.WriteInt64(ts_left);
-            _dataWriter.WriteInt64(ts_right);
+            _dataWriter.WriteInt32(LRFImage.Length); // (4 bytes)
+            _dataWriter.WriteInt64(ts_left); // (8 bytes)
+            _dataWriter.WriteInt64(ts_right); // (8 bytes)
 
-            // Write actual data
+            // Write image byte data (LRFImage.Length # bytes)
             _dataWriter.WriteBytes(LRFImage);
 
-            // Send out
+            // Send data to remote TCP Server
             await _dataWriter.StoreAsync();
             await _dataWriter.FlushAsync();
 
-            client_sending_image_bytes = false;
         }
         catch (Exception e)
         {

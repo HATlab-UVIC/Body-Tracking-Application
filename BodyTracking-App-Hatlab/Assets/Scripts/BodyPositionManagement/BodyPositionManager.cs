@@ -2,78 +2,80 @@ using UnityEngine;
 using UnityDebug = UnityEngine.Debug;
 using System.Collections.Generic;
 
+/*
+Summary:
+The body position manager is used for managing and updating the joint coordinates to the game object
+for the user to get visual feedback from their movements.
+*/
 public class BodyPositionManager : MonoBehaviour
 { 
     LimbComponents _limbComponents;
     public Transform BodyAlignmentPosition_Object; // transform properties of BodyAlignment_Position gameObject
-    public GameObject HoloLens_object;
+    public GameObject HoloLens_Object; // the main camera game object
     public static Vector3 HoloLens_Transform_position;
 
-    public static Queue<Vector3[]> _bodyPositions;
+    public static Queue<Vector3[]> JointCoordinates_Frames;
 
-    
+    /*
+    Summary:
+    Initialize body position manager components.
+    */
     public void Start()
     {
-        _bodyPositions = new Queue<Vector3[]>();
-        HoloLens_Transform_position = HoloLens_object.transform.position;
+        // joint vectors queue for updating patient game object
+        JointCoordinates_Frames = new Queue<Vector3[]>(); 
+        // get main camera tranform position
+        HoloLens_Transform_position = HoloLens_Object.transform.position;
 
-        //UnityDebug.Log("BodyPositionManager :: Starting BPM Initialization...");
         bool limb_setup_status = false;
         _limbComponents = LimbComponents.Instance;
         while (!limb_setup_status)
         {
-            // create the instance of BJC and initialize the joint coordinates to starting pose
+            // initialize the joint coordinates to starting pose
             TCPStreamCoordinateHandler.InitJointCoordinates(BodyAlignmentPosition_Object);
 
-            // storing the starting pose joint coordinates to the limb components
-            if (_bodyPositions.Count > 0) limb_setup_status = _limbComponents.InitLimbs(gameObject, _bodyPositions.Dequeue());
+            // set the patient limb components to init pose
+            if (JointCoordinates_Frames.Count > 0) limb_setup_status = _limbComponents.InitLimbs(gameObject, JointCoordinates_Frames.Dequeue());
         }
-
-        AlignLimbObjects(_limbComponents.Patient_Limbs);
-        //UnityDebug.Log("BodyPositionManager :: Ending BPM Initialization.");
+        // display init pose
+        LimbComponents.AlignLimbObjects(_limbComponents.Patient_Limbs);
     }
 
 
+    /*
+    Summary:
+    Update is used to get the transform position property of the main camera for tracking the
+    translational movement to be applied to the patent game object.
+    */
     public void Update()
     {
-        HoloLens_Transform_position = HoloLens_object.transform.position;
+        HoloLens_Transform_position = HoloLens_Object.transform.position;
         TCPStreamCoordinateHandler.SCALE_FACTOR_OFFSET = HoloLens_Transform_position.z;
     }
 
 
+    /*
+    Summary:
+    LateUpdate is used for setting the patient game object Vector3 values to display the new coordinates
+    to the user. LateUpdate makes this the last method to run during a frame.
+    */
     public void LateUpdate()
     {
-        //UnityDebug.Log("BodyPositionManager :: Bool States :: TCP Server ("+ TCPServer.tcp_server_connected.ToString()+") Joint Coordinates Set ("+ _bodyJointCoordinates._coordinateDataSet.ToString()+")");
-        //UnityDebug.Log("BodyPositionManager :: Loop :: Updating body components :: coorindate queue >> "+_bodyPositions.Count);
-
-        if (_bodyPositions.Count > 0) _limbComponents.UpdateBodyComponents(_bodyPositions.Dequeue()); //_bodyJointCoordinates._jointCoordinateVectors
-        AlignLimbObjects(_limbComponents.Patient_Limbs);
-
-        //UnityDebug.Log("BodyPositionManager :: Loop :: Update complete.");
+        if (JointCoordinates_Frames.Count > 0) _limbComponents.UpdateBodyComponents(JointCoordinates_Frames.Dequeue());
+        LimbComponents.AlignLimbObjects(_limbComponents.Patient_Limbs);
     }
 
 
-    public void AlignLimbObjects(LimbStruct[] limbs)
-    {
-        //UnityDebug.Log("BodyPositionManager :: applying coordinates to limb gameObjects...");
+    /*
+    Summary:
+    Method takes in a joint coordinate vector array and adds it to the frame queue to update
+    the patient game object coordinates.
 
-        for (int i=0; i < limbs.Length; i++)
-        {
-            //UnityDebug.Log("BodyJointManager :: Limb data...\n" + limbs[i].obj.name + " | " + limbs[i].limbOrigin.ToString() + " | " + limbs[i].limbEnd.ToString());
-            // calculate the position and rotation of the limb object
-            limbs[i].obj.transform.SetPositionAndRotation(Vector3.Lerp(limbs[i].limbOrigin, limbs[i].limbEnd, 0.5f),
-                                                      Quaternion.LookRotation(limbs[i].limbEnd - limbs[i].limbOrigin));
-
-            float zScale = Vector3.Distance(limbs[i].limbOrigin, limbs[i].limbEnd);
-            limbs[i].obj.transform.localScale = new Vector3(LimbComponents.DEFAULT_LIMB_SIZE, LimbComponents.DEFAULT_LIMB_SIZE, zScale);
-        }
-        //UnityDebug.Log("BodyPositionManager :: end of applying coordinates to limb gameObjects.");
-
-    }
-
-
+    Parameters:
+    Vector3[] >> The joint coordinate vector array produced by the TCPStreamCoordinateHandler
+    */
     public static void AddPoseToQueue(Vector3[] jointCoordinateVectors)
     {
-        _bodyPositions.Enqueue(jointCoordinateVectors);
+        JointCoordinates_Frames.Enqueue(jointCoordinateVectors);
     }
 }

@@ -1,7 +1,18 @@
 using UnityEngine;
 
+/*
+Summary:
+Class is used for the purpose of modifying the display position of the patient
+game object. This in conjunction with the corresponding voice commands, allow
+the user to move the game object in 3D space so it is positioned over their body.
+*/
 public class BodyAlignmentUpdater : MonoBehaviour
 {
+    /*
+    Summary:
+    Method is used in conjunction with the voice commands to move the
+    patient game object.
+    */
     public void MoveBodyAlignment(int direction)
     {
         Vector3 _alignment = TCPStreamCoordinateHandler.BodyAlignment_Position;
