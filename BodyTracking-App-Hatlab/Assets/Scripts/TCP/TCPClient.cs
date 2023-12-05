@@ -1,5 +1,4 @@
 using System;
-using System.Net.Sockets;
 //using System.Net.Sockets;
 using UnityEngine;
 using UnityDebug = UnityEngine.Debug;
@@ -93,21 +92,18 @@ public class TCPClient : MonoBehaviour
     private async void stop_tcp_client_connection(int closed_state)
     {
 #if WINDOWS_UWP
-        if (closed_state == 1)
+        try
         {
-            try
-            {
-                // send stop operation message to TCP Server
-                _dataWriter.WriteString("e");
-                await _dataWriter.StoreAsync();
-                await _dataWriter.FlushAsync();
-            }
-            catch (Exception e)
-            {
-                SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
-                UnityDebug.Log("Local TCP Client :: ERROR :: Error sending PV image to remote TCP server.\n" + e.Message);
-                UnityDebug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
-            }
+            // send stop operation message to TCP Server
+            _dataWriter.WriteString("e");
+            await _dataWriter.StoreAsync();
+            await _dataWriter.FlushAsync();
+        }
+        catch (Exception e)
+        {
+            SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
+            UnityDebug.Log("Local TCP Client :: ERROR :: Error sending PV image to remote TCP server.\n" + e.Message);
+            UnityDebug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
         }
 
         // close TCP Server connection

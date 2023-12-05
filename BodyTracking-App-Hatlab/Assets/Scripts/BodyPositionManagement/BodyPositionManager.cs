@@ -33,10 +33,10 @@ public class BodyPositionManager : MonoBehaviour
         {
             // initialize the joint coordinates to starting pose
             TCPStreamCoordinateHandler.InitJointCoordinates(BodyAlignmentPosition_Object);
-
             // set the patient limb components to init pose
             if (JointCoordinates_Frames.Count > 0) limb_setup_status = _limbComponents.InitLimbs(gameObject, JointCoordinates_Frames.Dequeue());
         }
+
         // display init pose
         LimbComponents.AlignLimbObjects(_limbComponents.Patient_Limbs);
     }

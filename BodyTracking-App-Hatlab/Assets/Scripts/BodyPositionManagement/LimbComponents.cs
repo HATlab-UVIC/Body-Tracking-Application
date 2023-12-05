@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using UnityDebug = UnityEngine.Debug;
 
 /*
 Summary:
@@ -112,7 +113,7 @@ public class LimbComponents
             }
             return true;
         }
-        catch { return false; }
+        catch (Exception e) { return false; }
     }
 }
 
