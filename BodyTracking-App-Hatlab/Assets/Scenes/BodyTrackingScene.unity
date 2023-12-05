@@ -721,8 +721,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6c8dd28e28dbc240abc44badf02e32d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BodyAlignmentPosition: {fileID: 1312275549}
-  HoloLens_object: {fileID: 963194225}
+  BodyAlignmentPosition_Object: {fileID: 1312275549}
+  HoloLens_Object: {fileID: 963194225}
 --- !u!1 &382115551
 GameObject:
   m_ObjectHideFlags: 0
