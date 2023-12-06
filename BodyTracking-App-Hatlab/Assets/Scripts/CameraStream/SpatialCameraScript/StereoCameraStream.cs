@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System;
 using UnityEngine.UI;
 using HoloLensCameraStream;
@@ -7,6 +8,7 @@ using System.Collections;
 using System.Linq;
 using bug = System.Diagnostics.Debug;
 using UnityDebug = UnityEngine.Debug;
+using System.Net;
 
 #if WINDOWS_UWP && XR_PLUGIN_OPENXR
 using Windows.Perception.Spatial;
@@ -35,12 +37,16 @@ public class StereoCameraStream : MonoBehaviour
     HL2ResearchMode researchMode;
 #endif
 
-    private Queue<byte[]> SpatialImageFrames;
+
+    //private void Awake() { DontDestroyOnLoad(gameObject); }
+
 
     /*
     Summary: 
     Initialize the components required for image capture and transmission.
     */
+    private Queue<byte[]> SpatialImageFrames;
+    int scene_state;
     void Start()
     {
         try
@@ -67,6 +73,7 @@ public class StereoCameraStream : MonoBehaviour
 #endif
         // init frame sending queue
         SpatialImageFrames = new Queue<byte[]>();
+        scene_state = 0;
 
     }
 
@@ -75,36 +82,23 @@ public class StereoCameraStream : MonoBehaviour
     Summary: 
     Update is used for capturing spatial image frames and sending the image data over TCP.
     */
-#if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
     byte[] sendBytes = null;
     byte[] LRFImage = null;
     long ts_unix_left = 0;
     long ts_unix_right = 0;
-#endif
     int garbage_count = 1;
     void Update()
     {
-        if (garbage_count % 120 == 0) GC.Collect();
-        garbage_count++;
-
-#if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
-        SaveSpatialImageEvent();
-        if (SpatialImageFrames.Count < 2) SpatialImageFrames.Enqueue(LRFImage);
-
-        if (!TCPClient.tcp_client_connected || TCPClient.client_sending_image_bytes) return;
-        
-        // check that there are images to be sent
-        if (SpatialImageFrames.Count > 0)
+        if (scene_state == 1)
         {
-            sendBytes = SpatialImageFrames.Dequeue();
-            if (sendBytes.Length > 0) tcp_client.SendSpatialImageAsync(sendBytes, ts_unix_left, ts_unix_right);
+            garbage_count = Garbage(garbage_count, 120);
+            BodyTrackingFrameCapture();
+            sendBytes = null;
         }
 
         LRFImage = null;
-        sendBytes  = null;
         ts_unix_left = 0;
         ts_unix_right = 0;
-#endif
     }
 
 
@@ -113,10 +107,7 @@ public class StereoCameraStream : MonoBehaviour
     The handler method for the voice command 'connect server' to reconnect to the
     remote TCP Server if it closes or disconnects.
     */
-    public void ConnectToRemoteServer()
-    {
-        tcp_client.start_tcp_client_connection();
-    }
+    public void ConnectToRemoteServer() { tcp_client.start_tcp_client_connection(); }
 
 
     /*
@@ -124,14 +115,14 @@ public class StereoCameraStream : MonoBehaviour
     Method is used to save image frames from the front left and right spatial cameras
     on the HoloLens device.
     */
-#if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
-    public void SaveSpatialImageEvent()
+    private bool SaveSpatialImageEvent()
     {
-        long ts_ft_left = 0;
-        long ts_ft_right = 0;
-
         try 
-        { 
+        {
+#if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
+            long ts_ft_left = 0;
+            long ts_ft_right = 0;
+
             // get the front left camera image buffer
             byte[] leftImage = researchMode.GetLFCameraBuffer(out ts_ft_left);
             // get the fri=ont right camera image buffer
@@ -147,13 +138,56 @@ public class StereoCameraStream : MonoBehaviour
 
             ts_unix_left = ts_left.TargetTime.ToUnixTimeMilliseconds();
             ts_unix_right = ts_right.TargetTime.ToUnixTimeMilliseconds();
-        } 
+#endif
+            return true;
+        }
         catch (Exception e) 
         { 
             LRFImage = new byte[0];
             ts_unix_left = 0;
             ts_unix_right = 0;
+            return false;
         }
     }
-#endif
+
+
+
+    public void CalibrationFrameCapture()
+    {
+        bool image_capture_status = SaveSpatialImageEvent();
+        if (image_capture_status && TCPClient.tcp_client_connected)
+        {
+            tcp_client.SendSpatialImageAsync("c", LRFImage, ts_unix_left, ts_unix_right);
+        }
+    }
+
+
+    public void BodyTrackingFrameCapture()
+    {
+        SaveSpatialImageEvent();
+        if (SpatialImageFrames.Count < 2) SpatialImageFrames.Enqueue(LRFImage);
+
+        if (!TCPClient.tcp_client_connected || TCPClient.client_sending_image_bytes) return;
+
+        // check that there are images to be sent
+        if (SpatialImageFrames.Count > 0)
+        {
+            sendBytes = SpatialImageFrames.Dequeue();
+            if (sendBytes.Length > 0) tcp_client.SendSpatialImageAsync("f", sendBytes, ts_unix_left, ts_unix_right);
+        }
+    } 
+
+
+    public void LoadBodyTrackingScene()
+    {
+        scene_state = 1;
+        SceneManager.LoadScene("BodyTrackingScene");
+    }
+
+
+    private int Garbage(int frame, int freq)
+    {
+        if (frame % freq == 0) GC.Collect();
+        return frame++;
+    }
 }
