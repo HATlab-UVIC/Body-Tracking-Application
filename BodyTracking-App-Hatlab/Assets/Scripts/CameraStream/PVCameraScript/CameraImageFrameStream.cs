@@ -179,7 +179,7 @@ public class CameraImageFrameStream : MonoBehaviour
 #if ENABLE_WINMD_SUPPORT && WINDOWS_UWP
                 //UnityDebug.Log("CameraImageFrameStream :: Sending Image Frame...");
             //tcp_client.SendPVImageAsync(_latestImageBytes);
-            if (LRFImage != null) tcp_client.SendSpatialImageAsync(LRFImage, ts_unix_left, ts_unix_right);
+            if (LRFImage != null) tcp_client.SendSpatialImageAsync("f",LRFImage, ts_unix_left, ts_unix_right);
 #endif
     }
 
