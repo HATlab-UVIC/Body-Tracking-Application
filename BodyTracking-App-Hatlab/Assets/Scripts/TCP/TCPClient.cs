@@ -175,11 +175,12 @@ public class TCPClient : MonoBehaviour
     via the local TCP Client and received by the remote TCP Server.
 
     Parameters:
+    char >> The header value for processing the images
     byte[] >> The array of combined image bytes that define the captured image frames
     long >> The timestamp of the left image
     long >> The timestamp of the right image
     */
-    public async void SendSpatialImageAsync(byte[] LRFImage, long ts_left, long ts_right)
+    public async void SendSpatialImageAsync(string header,byte[] LRFImage, long ts_left, long ts_right)
     {
 #if WINDOWS_UWP
         if (!_lastMessageSent) return;
@@ -188,7 +189,7 @@ public class TCPClient : MonoBehaviour
         try
         {
             // Write single byte header (1 byte)
-            _dataWriter.WriteString("f");
+            _dataWriter.WriteString(header);
 
             // Write Timestamp and Length
             UnityDebug.Log("Local TCP CLient :: SendSpatialImageAsync() :: LRI length: " + LRFImage.Length);
