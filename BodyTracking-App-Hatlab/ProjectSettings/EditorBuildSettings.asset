@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/CameraCalibrationScene.unity
+    guid: 97299f68830a3d940b52b22edd4ebf63
+  - enabled: 1
     path: Assets/Scenes/BodyTrackingScene.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   m_configObjects:
