@@ -24,7 +24,7 @@ public static class TCPStreamCoordinateHandler
     bool >> Returns the completion/success status of the method
     */
     private static readonly float SCALE_FACTOR_DEFAULT = 85.0f;
-    private static readonly float OFFSET_FACTOR = 1.5f; 
+    private static readonly float OFFSET_FACTOR = 5f; 
     public static float SCALE_FACTOR_OFFSET { get; set; } = 0.0f;
 
     public static bool TCPDataReadHandler(string OP_Body_Coordinates_String)
@@ -49,7 +49,7 @@ public static class TCPStreamCoordinateHandler
                 // split based on any number of whitespaces
                 XYZ_VectorComponents_Strings = Regex.Split(CoordinateVectors_Array[i], @"\s+");
 
-                float SCALE_FACTOR = SCALE_FACTOR_DEFAULT + (OFFSET_FACTOR * SCALE_FACTOR_OFFSET);
+                float SCALE_FACTOR = SCALE_FACTOR_DEFAULT - (OFFSET_FACTOR * SCALE_FACTOR_OFFSET);
                 // store the x, y, z components as float values
                 for (int j = 0; j < 3; j++) XYZ_VectorComponents_Floats[j] = float.Parse(XYZ_VectorComponents_Strings[j]) / SCALE_FACTOR;
 
