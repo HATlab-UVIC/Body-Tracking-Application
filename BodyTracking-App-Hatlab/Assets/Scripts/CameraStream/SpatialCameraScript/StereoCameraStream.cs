@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System;
+using System.Threading.Tasks;
 using UnityEngine.UI;
 using HoloLensCameraStream;
 using System.Collections.Generic;
@@ -38,7 +39,7 @@ public class StereoCameraStream : MonoBehaviour
 #endif
 
 
-    //private void Awake() { DontDestroyOnLoad(gameObject); }
+    private void Awake() { DontDestroyOnLoad(gameObject); }
 
 
     /*
@@ -74,6 +75,7 @@ public class StereoCameraStream : MonoBehaviour
         // init frame sending queue
         SpatialImageFrames = new Queue<byte[]>();
         scene_state = 0;
+        photo_indicator.SetActive(false);
 
     }
 
@@ -151,14 +153,21 @@ public class StereoCameraStream : MonoBehaviour
     }
 
 
-
-    public void CalibrationFrameCapture()
+    [SerializeField]
+    GameObject photo_indicator;
+    public async void CalibrationFrameCapture()
     {
+        photo_indicator.SetActive(true);
+
+        await Task.Delay(2000);
+        
         bool image_capture_status = SaveSpatialImageEvent();
+        
         if (image_capture_status && TCPClient.tcp_client_connected)
         {
             tcp_client.SendSpatialImageAsync("c", LRFImage, ts_unix_left, ts_unix_right);
         }
+        photo_indicator.SetActive(false);
     }
 
 
