@@ -192,13 +192,45 @@ public class TCPClient : MonoBehaviour
             _dataWriter.WriteString(header);
 
             // Write Timestamp and Length
-            UnityDebug.Log("Local TCP CLient :: SendSpatialImageAsync() :: LRI length: " + LRFImage.Length);
             _dataWriter.WriteInt32(LRFImage.Length); // (4 bytes)
             _dataWriter.WriteInt64(ts_left); // (8 bytes)
             _dataWriter.WriteInt64(ts_right); // (8 bytes)
 
             // Write image byte data (LRFImage.Length # bytes)
             _dataWriter.WriteBytes(LRFImage);
+
+            // Send data to remote TCP Server
+            await _dataWriter.StoreAsync();
+            await _dataWriter.FlushAsync();
+
+        }
+        catch (Exception e)
+        {
+            SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
+            UnityDebug.Log("Local TCP Client :: ERROR :: Error sending spatial image to remote TCP server.\n" + e.Message);
+            Debug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
+        }
+        _lastMessageSent = true;
+        client_sending_image_bytes = false;
+#endif
+    }
+
+
+    /*
+    Summary:
+    Method is used to send the header byte signifying to start the calibration
+    of the stereo cameras using the captured calibration images.
+    */
+    public async void StartCameraCalibration()
+    {
+#if WINDOWS_UWP
+        if (!_lastMessageSent) return;
+        _lastMessageSent = false;
+        client_sending_image_bytes = true;
+        try
+        {
+            // Write single byte header (1 byte)
+            _dataWriter.WriteString("x");
 
             // Send data to remote TCP Server
             await _dataWriter.StoreAsync();

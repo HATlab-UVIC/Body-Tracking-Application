@@ -91,6 +91,7 @@ public class StereoCameraStream : MonoBehaviour
     int garbage_count = 1;
     void Update()
     {
+        // check if we are in the body tracking state
         if (scene_state == 1)
         {
             garbage_count = Garbage(garbage_count, 120);
@@ -102,14 +103,6 @@ public class StereoCameraStream : MonoBehaviour
         ts_unix_left = 0;
         ts_unix_right = 0;
     }
-
-
-    /*
-    Summary: 
-    The handler method for the voice command 'connect server' to reconnect to the
-    remote TCP Server if it closes or disconnects.
-    */
-    public void ConnectToRemoteServer() { tcp_client.start_tcp_client_connection(); }
 
 
     /*
@@ -153,24 +146,46 @@ public class StereoCameraStream : MonoBehaviour
     }
 
 
+    /*
+    summary:
+    Method is used in conjunction with 'capture' button in the Unity application for 
+    capture and transmission of a single set of stereo calibration images of the chessboard 
+    for calibration. A status indicator is displayed in the app while an image is being 
+    captured.
+    */
     [SerializeField]
     GameObject photo_indicator;
     public async void CalibrationFrameCapture()
     {
         photo_indicator.SetActive(true);
 
+        // delay to get hands out of image frame
         await Task.Delay(2000);
         
         bool image_capture_status = SaveSpatialImageEvent();
         
         if (image_capture_status && TCPClient.tcp_client_connected)
         {
+            // 'c' header specifies calibration image to remote TCP Server
             tcp_client.SendSpatialImageAsync("c", LRFImage, ts_unix_left, ts_unix_right);
         }
         photo_indicator.SetActive(false);
     }
 
 
+    /*
+    Summary:
+    Method is used to trigger the TCPClient method that sends the status header byte to
+    perform the camera calibration for the stereo cameras.
+    */
+    public void StartCameraCalibration() { if (TCPClient.tcp_client_connected) tcp_client.StartCameraCalibration(); }
+
+
+    /*
+    Summary:
+    Method is used for capturing spatial image frames and sending them to the remote
+    TCP Server to be processed by Openpose.
+    */
     public void BodyTrackingFrameCapture()
     {
         SaveSpatialImageEvent();
@@ -187,6 +202,11 @@ public class StereoCameraStream : MonoBehaviour
     } 
 
 
+    /*
+    Summary:
+    Method is used with the 'Body Tracking' button to switch from the calibration
+    scene to the body tracking scene. (ie. start the body tracking)
+    */
     public void LoadBodyTrackingScene()
     {
         scene_state = 1;
@@ -194,6 +214,19 @@ public class StereoCameraStream : MonoBehaviour
     }
 
 
+    /*
+    Summary:
+    Method is used for specifying reoccuring garbage collector calls.
+        **NOTE** this may not be needed and can possibly be removed from
+        the Update() method.
+
+    Parameters:
+    int >> the integer specifying the current frame number
+    int >> the interval with which we want to call the GC (every 'i' frames)
+
+    Return:
+    int >> the incrimented frame integer
+    */
     private int Garbage(int frame, int freq)
     {
         if (frame % freq == 0) GC.Collect();
