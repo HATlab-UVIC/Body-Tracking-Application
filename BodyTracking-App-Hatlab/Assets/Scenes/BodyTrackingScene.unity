@@ -3813,6 +3813,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1881115225}
   - component: {fileID: 1881115226}
+  - component: {fileID: 1881115227}
   m_Layer: 0
   m_Name: SpeechInputHandler
   m_TagString: Untagged
@@ -3885,8 +3886,8 @@ MonoBehaviour:
     response:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 0}
-          m_TargetAssemblyTypeName: StereoCameraStream, Scripts
+        - m_Target: {fileID: 1881115227}
+          m_TargetAssemblyTypeName: TCPReconnectHandler, Scripts
           m_MethodName: ConnectToRemoteServer
           m_Mode: 1
           m_Arguments:
@@ -3995,6 +3996,18 @@ MonoBehaviour:
           m_CallState: 2
   persistentKeywords: 0
   speechConfirmationTooltipPrefab: {fileID: 0}
+--- !u!114 &1881115227
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1881115223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36ea52bfad3e1224b83c63360143a71c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1902373488
 PrefabInstance:
   m_ObjectHideFlags: 0
