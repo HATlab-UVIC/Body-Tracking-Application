@@ -1,5 +1,10 @@
 import numpy as np
 
+'''
+Code from below resource:
+https://github.com/niconielsen32/ComputerVision/tree/master/StereoVisionDepthEstimation
+'''
+
 def find_depth(left_point, right_point, frame_left, frame_right, baseline, f, fov):
     # CONVERT FOCAL LENGTH f FROM [mm] TO [pixel]:
     height_right, width_right = frame_right.shape

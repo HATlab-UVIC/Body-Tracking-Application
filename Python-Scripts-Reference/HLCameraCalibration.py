@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 import glob
-import ast
 import Triangulation as tri
 import ImageRectification as ImRec
 
@@ -9,10 +8,21 @@ import ImageRectification as ImRec
 class HLCameraCalibration:
     
     def OpenCV_Chess_Calibration(left_cam_path, right_cam_path):
+        '''
+        Summary:
+        Function is used to calibrate the front stereo cameras on the
+        HoloLens 2 device. Upon completion of the calibration, an 'xml'
+        file is created which contains the calibration parameters for
+        the cameras. NOTE if a calibration has already been completed,
+        the existing parameters can be used to run the body tracking app.
+
+        Parameters:\n
+        *_cam_path >> the folder path to where the calibration images are stored
+        '''
+
         print("HL Camera Calibration :: Calibrating...\n")
         
         ########## Find chessboard corners (object/image points) ###########
-        
         chessboardSize = (7,6)
         frameSize = (640,480)
 
@@ -44,6 +54,7 @@ class HLCameraCalibration:
             retL, cornersL = cv2.findChessboardCorners(grayL, chessboardSize, None)
             retR, cornersR = cv2.findChessboardCorners(grayR, chessboardSize, None)
 
+            # check whether the calibration images are valid or not
             if retL and retR == True:
                 valid_img_count += 2
                 objpoints.append(objp)
@@ -83,6 +94,7 @@ class HLCameraCalibration:
         stereoMapL = cv2.initUndistortRectifyMap(newCameraMatrixL, distL, rectL, projMatrixL, grayL.shape[::-1], cv2.CV_16SC2)
         stereoMapR = cv2.initUndistortRectifyMap(newCameraMatrixR, distR, rectR, projMatrixR, grayR.shape[::-1], cv2.CV_16SC2)
 
+        # save camera parameters to .xml file
         print('Saving camera parameters to file...')
         cv_file = cv2.FileStorage('stereoMap.xml', cv2.FILE_STORAGE_WRITE)
 
@@ -100,6 +112,16 @@ class HLCameraCalibration:
     def Calculate3DCoordiantes(img_left, img_right, coordL, coordR):
         '''
         Summary:
+        Function is used to calculate the depth coordinate value from
+        the stereo images and returns a string containing all of the
+        joint coordinates for the image frame.
+
+        Parameters:\n
+        img_* >> the path to the image including the file name (../../media/tracking/img_#.png)\n
+        coord* >> the coordinate string returned from openpose
+
+        Return:\n
+        coordinate_output >> the coordinate string containing all the 3D joint coordinates
         '''
         frame_rate = 30 #camera frame rate
         B = 10          #distance between the cameras [cm]
@@ -107,6 +129,7 @@ class HLCameraCalibration:
         fov = 60        #camera field of view in the horizontal plane [degrees]
         print("Calculating 3D coordinates")
 
+        # read the stored images
         imgL = cv2.imread(img_left)
         imgR = cv2.imread(img_right)
 
@@ -128,13 +151,25 @@ class HLCameraCalibration:
 
             depth = tri.find_depth(calc_p_L, calc_p_R, frame_left, frame_right, B, f, fov)
 
-            coordinate_output += f'[{xL} {yL} {depth}]' #{depth}
+            coordinate_output += f'[{xL} {yL} {depth}]'
 
         coordinate_output += ']]'
         return coordinate_output
 
     
     def convert_string_to_npArray(OP_Coord_String):
+        '''
+        Summary:
+        Function takes in an openpose coordinate string and converts it
+        into a numpy array of (x, y) coordinates for depth calculation.
+
+        Parameters:\n
+        OP_Coord_String >> an openpose coordinate string
+
+        Return:\n
+        np.array() >> returns a numpy array
+        '''
+
         # Remove the brackets and new line characters
         float_vals = OP_Coord_String.replace("[", "").replace("]", "").replace("\n", "")
         # Split the string into a list of strings

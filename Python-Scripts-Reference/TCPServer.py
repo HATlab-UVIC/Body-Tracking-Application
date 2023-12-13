@@ -19,7 +19,6 @@ calib_folder = '../../../examples/media/calibration_images/'
 left_cam_img_pth =  '../../../examples/media/calibration_images/left_camera/'
 right_cam_img_pth =  '../../../examples/media/calibration_images/right_camera/'
 paths = [tracking_img_pth, calib_folder, left_cam_img_pth, right_cam_img_pth, cl.log_folder, cl.coord_log_dir]
-calib_paths = [left_cam_img_pth, right_cam_img_pth]
 
 def tcp_server():
     '''
@@ -33,6 +32,7 @@ def tcp_server():
     serverHost = '' # localhost
     serverPort = 9090
     
+    # check that directories are valid/created
     for path in paths:
          directory_check(path)
 
@@ -49,7 +49,6 @@ def tcp_server():
 
     sSock.listen(10)
     print('Listening for client connection requests...')
-    #sSock.settimeout(1000.0)
     while True:
         try:
             # connect to the remote TCP Client
@@ -64,7 +63,7 @@ def tcp_server():
     acceptable_chars = ['f', 'v']
     log_date = datetime.now()
     log_file_prefix = log_date.strftime("%d%m%Y-%H%M%S")
-    #loop this code forever while receiving data
+    #loop for receiving data during app runtime
     while True:
         start_time = datetime.now()
         try:
@@ -115,13 +114,23 @@ def tcp_server():
 
         end_time = datetime.now()
         print("TCPServer :: Image Processed :: runtime (", end_time-start_time,")")
-            #print("TCPServer :: main loop :: header 'v' :: coordinates sent over TCP!")
 
 
 def spatial_image_conversion(len, image_byte_buffer, save_loc_L, save_loc_R, ts):
      '''
      Summary:
+     Method is used to convert the byte image buffer into images. The spatial
+     images are received in a combined/single buffer. The left and right spatial
+     images are seperated and stored as independent images.
 
+     Parameters:\n
+     len >> The number of bytes in the image buffer\n
+     image_byte_buffer >> the buffer containing the image bytes\n
+     save_loc_* >> the file path for where to store the images\n
+     ts >> the timestamp associated to the image
+
+     Returns:\n
+     file_name_* >> return the file names so the images can be processed by openpose
      '''
 
      ts_left, ts_right = struct.unpack(">qq", ts)
@@ -144,6 +153,17 @@ def spatial_image_conversion(len, image_byte_buffer, save_loc_L, save_loc_R, ts)
 
 
 def pv_image_conversion(image_byte_buffer, save_loc):
+     '''
+     Summary:
+     Method is used to convert the PV byte image buffer into an image.
+
+     Parameters:\n
+     image_byte_buffer >> the buffer containing the image bytes
+     save_loc >> the file path of where to save the images
+
+     Returns:\n
+     file_name_* >> return the file name so the image can be processed by openpose
+     '''
      # convert image bytes into an image
      PV_img_np = np.frombuffer(image_byte_buffer, dtype=np.uint32)
      PV_image = Image.frombytes('RGBA', (424,240), PV_img_np)
@@ -151,7 +171,7 @@ def pv_image_conversion(image_byte_buffer, save_loc):
      # save the image file to the save folder
      timestamp = str(int(time.time()))
      file_name = timestamp + '_PV.png'
-     PV_image.save(tracking_img_pth + file_name, encoding_errors='ignore')
+     PV_image.save(save_loc + file_name, encoding_errors='ignore')
 
      return file_name
 
