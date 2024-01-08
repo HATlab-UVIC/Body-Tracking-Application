@@ -49,7 +49,7 @@ public static class TCPStreamCoordinateHandler
                 // split based on any number of whitespaces
                 XYZ_VectorComponents_Strings = Regex.Split(CoordinateVectors_Array[i], @"\s+");
 
-                float SCALE_FACTOR = SCALE_FACTOR_DEFAULT - (OFFSET_FACTOR * SCALE_FACTOR_OFFSET);
+                float SCALE_FACTOR = SCALE_FACTOR_DEFAULT + (OFFSET_FACTOR * SCALE_FACTOR_OFFSET);
                 // store the x, y, z components as float values
                 for (int j = 0; j < 3; j++) XYZ_VectorComponents_Floats[j] = float.Parse(XYZ_VectorComponents_Strings[j]) / SCALE_FACTOR;
 
@@ -86,7 +86,7 @@ public static class TCPStreamCoordinateHandler
         Vector3 TrackedAlignment_Position = TrackSpatialMovement();
         BodyAlignment_Offset = JointCoordinate_Vectors[0] - TrackedAlignment_Position;
 
-        // calculate the depth values of the joint coordinates
+        // re-align joint 0 to the alignment position
         JointCoordinate_Vectors[0] = TrackedAlignment_Position;
         JointCoordinate_Vectors[0].y *= -1;
 

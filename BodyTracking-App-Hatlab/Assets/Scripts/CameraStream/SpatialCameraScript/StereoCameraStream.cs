@@ -39,7 +39,7 @@ public class StereoCameraStream : MonoBehaviour
 #endif
 
 
-    private void Awake() { DontDestroyOnLoad(gameObject); }
+    void Awake() { DontDestroyOnLoad(gameObject); }
 
 
     /*
@@ -60,6 +60,7 @@ public class StereoCameraStream : MonoBehaviour
             researchMode.StartSpatialCamerasFrontLoop();
 #if WINDOWS_UWP && XR_PLUGIN_OPENXR
             researchMode.SetReferenceCoordinateSystem(_spatialCoordinateSystem);
+            _spatialCoordinateSystem = Microsoft.MixedReality.OpenXR.PerceptionInterop.GetSceneCoordinateSystem(UnityEngine.Pose.identity) as SpatialCoordinateSystem;
 #endif
 #endif
         }
@@ -69,9 +70,6 @@ public class StereoCameraStream : MonoBehaviour
         tcp_client = gameObject.GetComponent<TCPClient>();
         tcp_client.start_tcp_client_connection();
 
-#if WINDOWS_UWP && XR_PLUGIN_OPENXR
-        _spatialCoordinateSystem = Microsoft.MixedReality.OpenXR.PerceptionInterop.GetSceneCoordinateSystem(UnityEngine.Pose.identity) as SpatialCoordinateSystem;
-#endif
         // init frame sending queue
         SpatialImageFrames = new Queue<byte[]>();
         scene_state = 0;

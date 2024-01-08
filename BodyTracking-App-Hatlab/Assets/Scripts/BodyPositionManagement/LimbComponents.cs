@@ -109,11 +109,11 @@ public class LimbComponents
                                                           Quaternion.LookRotation(limbs[i].limbEnd - limbs[i].limbOrigin));
 
                 float zScale = Vector3.Distance(limbs[i].limbOrigin, limbs[i].limbEnd);
-                limbs[i].obj.transform.localScale = new Vector3(LimbComponents.DEFAULT_LIMB_SIZE, LimbComponents.DEFAULT_LIMB_SIZE, zScale);
+                limbs[i].obj.transform.localScale = new Vector3(DEFAULT_LIMB_SIZE, DEFAULT_LIMB_SIZE, zScale);
             }
             return true;
         }
-        catch (Exception e) { return false; }
+        catch { return false; }
     }
 }
 

@@ -36,7 +36,7 @@ public class TCPClient : MonoBehaviour
     */
     public void OnApplicationFocus(bool appInUse)
     {
-        if (!appInUse) stop_tcp_client_connection(0);
+        if (!appInUse) stop_tcp_client_connection();
         else if (appInUse && !tcp_client_connected) start_tcp_client_connection();
     }
 
@@ -48,7 +48,7 @@ public class TCPClient : MonoBehaviour
     */
     public void OnApplicationQuit()
     {
-        stop_tcp_client_connection(1);
+        stop_tcp_client_connection();
     }
 
 
@@ -89,7 +89,7 @@ public class TCPClient : MonoBehaviour
     Tear down the connection to the remote TCP Server. If the app is being shut down,
     send a shutdown message to stop the operation of the remote TCP Server.
     */
-    private async void stop_tcp_client_connection(int closed_state)
+    private async void stop_tcp_client_connection()
     {
 #if WINDOWS_UWP
         try
