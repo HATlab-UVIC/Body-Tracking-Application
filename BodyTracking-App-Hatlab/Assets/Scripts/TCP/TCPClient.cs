@@ -60,12 +60,15 @@ public class TCPClient : MonoBehaviour
     public async void start_tcp_client_connection()
     {
 #if WINDOWS_UWP
+        UnityDebug.Log("TCPClient : starting TCP connection to remote server...");
         if (_dataStreamSocket != null) _dataStreamSocket.Dispose();
 
         try
         {
             _dataStreamSocket = new StreamSocket();
+            UnityDebug.Log("TCPClient : HostName ("+remoteHost_IP_address+")");
             var _hostName = new Windows.Networking.HostName(remoteHost_IP_address);
+            UnityDebug.Log("TCPClient : new Windows Networking HostName...");
 
             // establish a connection with the remote server
             await _dataStreamSocket.ConnectAsync(_hostName, remote_connection_port);
@@ -74,12 +77,15 @@ public class TCPClient : MonoBehaviour
             _dataWriter = new DataWriter(_dataStreamSocket.OutputStream);
 
             tcp_client_connected = true;
+            UnityDebug.Log("TCPClient : Connection established.");
         } 
         catch (Exception e)
         {
             SocketErrorStatus webErrorStatus = SocketError.GetStatus(e.GetBaseException().HResult);
             UnityDebug.Log(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : e.Message);
+            UnityDebug.Log("TCPClient : ERROR : issue establishing connection to remote host.");
         }
+        
 #endif
     }
 
