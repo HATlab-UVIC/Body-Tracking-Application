@@ -116,23 +116,28 @@ public class StereoCameraStream : MonoBehaviour
             long ts_ft_left = 0;
             long ts_ft_right = 0;
 
-            // get the front left camera image buffer
-            byte[] leftImage = researchMode.GetLFCameraBuffer(out ts_ft_left);
-            // get the fri=ont right camera image buffer
-            byte[] rightImage = researchMode.GetRFCameraBuffer(out ts_ft_right);
+            if (researchMode.LFImageUpdated() && researchMode.RFImageUpdated())
+            {
+                // get the front left camera image buffer
+                byte[] leftImage = researchMode.GetLFCameraBuffer(out ts_ft_left);
+                // get the fri=ont right camera image buffer
+                byte[] rightImage = researchMode.GetRFCameraBuffer(out ts_ft_right);
             
-            // combine the images into a single buffer for transmission over TCP
-            LRFImage = new byte[leftImage.Length + rightImage.Length];
-            Array.Copy(leftImage, 0, LRFImage, 0, leftImage.Length);
-            Array.Copy(rightImage, 0, LRFImage, leftImage.Length, rightImage.Length);
+                // combine the images into a single buffer for transmission over TCP
+                LRFImage = new byte[leftImage.Length + rightImage.Length];
+                Array.Copy(leftImage, 0, LRFImage, 0, leftImage.Length);
+                Array.Copy(rightImage, 0, LRFImage, leftImage.Length, rightImage.Length);
             
-            Windows.Perception.PerceptionTimestamp ts_left = Windows.Perception.PerceptionTimestampHelper.FromHistoricalTargetTime(DateTime.FromFileTime(ts_ft_left));
-            Windows.Perception.PerceptionTimestamp ts_right = Windows.Perception.PerceptionTimestampHelper.FromHistoricalTargetTime(DateTime.FromFileTime(ts_ft_right));
+                Windows.Perception.PerceptionTimestamp ts_left = Windows.Perception.PerceptionTimestampHelper.FromHistoricalTargetTime(DateTime.FromFileTime(ts_ft_left));
+                Windows.Perception.PerceptionTimestamp ts_right = Windows.Perception.PerceptionTimestampHelper.FromHistoricalTargetTime(DateTime.FromFileTime(ts_ft_right));
 
-            ts_unix_left = ts_left.TargetTime.ToUnixTimeMilliseconds();
-            ts_unix_right = ts_right.TargetTime.ToUnixTimeMilliseconds();
+                ts_unix_left = ts_left.TargetTime.ToUnixTimeMilliseconds();
+                ts_unix_right = ts_right.TargetTime.ToUnixTimeMilliseconds();
+                
+                return true;
+            }
 #endif
-            return true;
+            return false;
         }
         catch (Exception e) 
         { 
