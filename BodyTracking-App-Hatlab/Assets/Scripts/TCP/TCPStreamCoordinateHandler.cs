@@ -51,7 +51,11 @@ public static class TCPStreamCoordinateHandler
 
                 float SCALE_FACTOR = SCALE_FACTOR_DEFAULT + (OFFSET_FACTOR * SCALE_FACTOR_OFFSET);
                 // store the x, y, z components as float values
-                for (int j = 0; j < 3; j++) XYZ_VectorComponents_Floats[j] = float.Parse(XYZ_VectorComponents_Strings[j]) / SCALE_FACTOR;
+                for (int j = 0; j < 3; j++)
+                {
+                    if (j != 2) XYZ_VectorComponents_Floats[j] = float.Parse(XYZ_VectorComponents_Strings[j]) / SCALE_FACTOR;
+                    else XYZ_VectorComponents_Floats[j] = float.Parse(XYZ_VectorComponents_Strings[j]);
+                }
 
                 // save components as Vector3 and store to body joint coordinate vectors variable
                 Joint_Vector = new Vector3(XYZ_VectorComponents_Floats[0], XYZ_VectorComponents_Floats[1], XYZ_VectorComponents_Floats[2]);
