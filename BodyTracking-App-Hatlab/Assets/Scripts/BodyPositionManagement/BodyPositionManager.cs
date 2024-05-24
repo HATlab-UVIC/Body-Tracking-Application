@@ -49,8 +49,8 @@ public class BodyPositionManager : MonoBehaviour
     */
     public void Update()
     {
-        HoloLens_Transform_position = HoloLens_Object.transform.position;
-        TCPStreamCoordinateHandler.SCALE_FACTOR_OFFSET = HoloLens_Transform_position.z;
+            HoloLens_Transform_position = HoloLens_Object.transform.position;
+            TCPStreamCoordinateHandler.SCALE_FACTOR_OFFSET = HoloLens_Transform_position.z;
     }
 
 
@@ -60,7 +60,7 @@ public class BodyPositionManager : MonoBehaviour
     to the user. LateUpdate makes this the last method to run during a frame.
     */
     public void LateUpdate()
-    {
+    { 
         if (JointCoordinates_Frames.Count > 0) _limbComponents.UpdateBodyComponents(JointCoordinates_Frames.Dequeue());
         LimbComponents.AlignLimbObjects(_limbComponents.Patient_Limbs);
     }
